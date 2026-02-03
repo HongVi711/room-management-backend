@@ -1,0 +1,127 @@
+@baseUrl = http://localhost:3000
+@tenant_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODFhMGI1MGEwZjFkMTg0ZWQwNTQxMyIsInJvbGUiOiJ0ZW5hbnQiLCJpYXQiOjE3NzAxMDM2MTgsImV4cCI6MTc3MDcwODQxOH0.ndZNedWecLx9Wpsi0tZWMvPFSG1KhPsX2fIjLh1uhmg
+@owner_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODFhYWE5YmNkNzJkOWYxNzUwYWIyNCIsInJvbGUiOiJvd25lciIsImlhdCI6MTc3MDEwNTc2MCwiZXhwIjoxNzcwNzEwNTYwfQ.r55vD5rLXkZ6PVxqY-Y_kK4bOuTHqSipWwBX4mmjIVA
+
+#######################################
+### 1️⃣ REGISTER (MẶC ĐỊNH = TENANT)
+#######################################
+
+### Register tenant
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "tenant1@gmail.com",
+  "name": "Tenant One",
+  "password": "123456"
+}
+
+### Register owner
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "owner1@gmail.com",
+  "name": "Owner",
+  "password": "123456"
+}
+
+#######################################
+### 2️⃣ LOGIN TENANT
+#######################################
+
+### Login tenant
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "tenant1@gmail.com",
+  "password": "123456"
+}
+
+### Logout
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{tenant_token}}
+
+
+#######################################
+### 3️⃣ LOGIN OWNER (ĐÃ SET ROLE TRONG DB)
+#######################################
+
+### Login owner
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "owner1@gmail.com",
+  "password": "123456"
+}
+
+### Logout
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{owner_token}}
+
+#######################################
+### 4️⃣ TEST AUTH MIDDLEWARE
+#######################################
+
+### Call protected API WITHOUT token (FAIL)
+GET {{baseUrl}}/api/rooms
+
+###
+# EXPECT: 401 Unauthorized
+###
+
+#######################################
+### 5️⃣ TEST ROLE – TENANT GỌI API OWNER (FAIL)
+#######################################
+
+### Tenant create room (FORBIDDEN)
+POST {{baseUrl}}/api/rooms
+Authorization: Bearer {{tenant_token}}
+Content-Type: application/json
+
+{
+  "number": "101",
+  "building": "A",
+  "floor": 1,
+  "area": 25,
+  "price": 3500000
+}
+
+###
+# EXPECT: 403 Forbidden
+###
+
+#######################################
+### 6️⃣ TEST ROLE – OWNER GỌI API OWNER (OK)
+#######################################
+
+### Owner create room (SUCCESS)
+POST {{baseUrl}}/api/rooms
+Authorization: Bearer {{owner_token}}
+Content-Type: application/json
+
+{
+  "number": "101",
+  "building": "A",
+  "floor": 1,
+  "area": 25,
+  "price": 3500000
+}
+
+###
+# EXPECT: 201 Created
+###
+
+#######################################
+### 7️⃣ TEST TOKEN INVALID
+#######################################
+
+### Invalid token
+GET {{baseUrl}}/api/rooms
+Authorization: Bearer abc.def.xyz
+
+###
+# EXPECT: 401 Invalid token
+###

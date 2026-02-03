@@ -1,4 +1,15 @@
-node_modules
+# dependencies
+node_modules/
+
+# environment variables
 .env
-dist
-coverage
+
+# build output
+dist/
+
+# test coverage
+coverage/
+
+# REST Client test file (VS Code)
+test.http
+*.http

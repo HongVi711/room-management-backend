@@ -36,7 +36,6 @@ export const logout = async (req: Request, res: Response) => {
       return res.status(200).json({ message: "Logged out" });
     }
 
-    // decode để lấy exp (không verify lại)
     const decoded: any = jwt.decode(token);
 
     if (decoded?.exp) {

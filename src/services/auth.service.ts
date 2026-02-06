@@ -1,14 +1,12 @@
 import User from "../models/user.model";
 import { signToken } from "../utils/jwt.util";
 import { ROLE } from "../utils/app.constants";
+import { RegisterDto } from "../dtos/auth.dto";
+import { toUserResponse } from "../mappers/user.mapper";
 import bcrypt from "bcryptjs";
 
 
-export const register = async (data: {
-  email: string;
-  name: string;
-  password: string;
-}) => {
+export const register = async (data: RegisterDto) => {
   const existed = await User.findOne({ email: data.email });
   if (existed) {
     throw new Error("Email already exists");
@@ -23,7 +21,7 @@ export const register = async (data: {
     role: ROLE.TENANT,
   });
 
-  return user;
+  return toUserResponse(user);
 };
 
 export const login = async (email: string, password: string) => {
@@ -42,5 +40,8 @@ export const login = async (email: string, password: string) => {
     role: user.role,
   });
 
-  return { user, token };
+  return { 
+    user: toUserResponse(user), 
+    token 
+  };
 };

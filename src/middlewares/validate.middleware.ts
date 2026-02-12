@@ -1,28 +1,35 @@
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { Request, Response, NextFunction } from "express";
+import { v2 as cloudinary } from "cloudinary";
+
+const cleanupFiles = async (files: any) => {
+  if (!files) return;
+  const fileArray = [...(files.cccdFront || []), ...(files.cccdBack || [])];
+  for (const file of fileArray) {
+    if (file.filename) {
+      await cloudinary.uploader.destroy(file.filename);
+    }
+  }
+};
 
 export const validateDto = (DtoClass: any) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    const dto = plainToInstance(DtoClass, req.body);
+    const dtoObj = plainToInstance(DtoClass, req.body);
 
-    const errors = await validate(dto, {
-      whitelist: true, // loại bỏ field thừa
-      forbidNonWhitelisted: true, // cấm field không khai báo
-    });
+    const errors = await validate(dtoObj);
 
     if (errors.length > 0) {
-      const messages = errors
-        .map((err) => Object.values(err.constraints || {}))
-        .flat();
+      await cleanupFiles(req.files);
 
+      const messages = errors.map((err) => Object.values(err.constraints || {})).flat();
       return res.status(400).json({
-        message: "Validation failed",
+        message: "Validation Error",
         errors: messages,
       });
     }
 
-    req.body = dto;
+    req.body = dtoObj;
     next();
   };
 };

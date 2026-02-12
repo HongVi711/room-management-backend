@@ -1,30 +1,6 @@
 @baseUrl = http://localhost:3000
-@tenant_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODFhMGI1MGEwZjFkMTg0ZWQwNTQxMyIsInJvbGUiOiJ0ZW5hbnQiLCJpYXQiOjE3NzAxMDM2MTgsImV4cCI6MTc3MDcwODQxOH0.ndZNedWecLx9Wpsi0tZWMvPFSG1KhPsX2fIjLh1uhmg
-@owner_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODFhYWE5YmNkNzJkOWYxNzUwYWIyNCIsInJvbGUiOiJvd25lciIsImlhdCI6MTc3MDEwNTc2MCwiZXhwIjoxNzcwNzEwNTYwfQ.r55vD5rLXkZ6PVxqY-Y_kK4bOuTHqSipWwBX4mmjIVA
-
-#######################################
-### 1️⃣ REGISTER (MẶC ĐỊNH = TENANT)
-#######################################
-
-### Register tenant
-POST {{baseUrl}}/api/auth/register
-Content-Type: application/json
-
-{
-  "email": "tenant1@gmail.com",
-  "name": "Tenant One",
-  "password": "123456"
-}
-
-### Register owner
-POST {{baseUrl}}/api/auth/register
-Content-Type: application/json
-
-{
-  "email": "owner1@gmail.com",
-  "name": "Owner",
-  "password": "123456"
-}
+@tenant_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGRjOTNhYmJmMmM2YWI2ODFiYzBjZSIsInJvbGUiOjAsImlhdCI6MTc3MDkwMjQ0NiwiZXhwIjoxNzcxNTA3MjQ2fQ.WGj36k99j4nrEum2X1F57FLHVvlwzj2Mqnv2bWYnhmc
+@owner_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGRhNjFmNDBlNDJlMWRiOWJhN2EyZCIsInJvbGUiOjEsImlhdCI6MTc3MDkxMTQ2NCwiZXhwIjoxNzcxNTE2MjY0fQ.f7u5U37UkztPSwI61HKPS91n5iAD9uROLqUSdgIoVvU
 
 #######################################
 ### 2️⃣ LOGIN TENANT
@@ -35,8 +11,8 @@ POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "tenant1@gmail.com",
-  "password": "123456"
+  "email": "chu-nha-01@gmail.com",
+  "password": "0987654321"
 }
 
 ### Logout
@@ -53,7 +29,7 @@ POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "owner1@gmail.com",
+  "email": "admin@gmail.com",
   "password": "123456"
 }
 
@@ -62,60 +38,143 @@ POST {{baseUrl}}/api/auth/logout
 Authorization: Bearer {{owner_token}}
 
 #######################################
-### 4️⃣ TEST AUTH MIDDLEWARE
+### 7️⃣ TEST GET USER BY ID
 #######################################
 
-### Call protected API WITHOUT token (FAIL)
-GET {{baseUrl}}/api/rooms
+### Owner get other user (SUCCESS)
+GET {{baseUrl}}/api/users/6981a0b50a0f1d184ed05413
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response có thông tin user
+###
+
+### Tenant get their own user (SUCCESS)
+GET {{baseUrl}}/api/users/698dc93abb72c6ab681bc0ce
+Authorization: Bearer {{tenant_token}}
+
+###
+# EXPECT: 200 OK
+# Tenant có thể xem user của họ
+###
+
+### Tenant get other user (FORBIDDEN)
+GET {{baseUrl}}/api/users/6981a0b50a0f1d184ed05413
+Authorization: Bearer {{tenant_token}}
+
+###
+# EXPECT: 403 Forbidden
+# Response: {"message": "You can only view your own profile"}
+###
+
+### Get non-existent user (NOT FOUND)
+GET {{baseUrl}}/api/users/507f1f77bcf86cd799439011
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 404 Not Found
+# Response: {"message": "User not found"}
+###
+
+### Get user without auth (UNAUTHORIZED)
+GET {{baseUrl}}/api/users/6981a0b50a0f1d184ed05413
 
 ###
 # EXPECT: 401 Unauthorized
 ###
 
 #######################################
-### 5️⃣ TEST ROLE – TENANT GỌI API OWNER (FAIL)
-#######################################
 
-### Tenant create room (FORBIDDEN)
-POST {{baseUrl}}/api/rooms
+### Get all users (SUCCESS - OWNER)
+GET {{baseUrl}}/api/users
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có danh sách tất cả users (không có password)
+###
+
+### Search users by email
+GET {{baseUrl}}/api/users?email=admin
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có users có email chứa "admin" (case insensitive)
+###
+
+### Search users by name
+GET {{baseUrl}}/api/users?name=nguyen
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có users có tên chứa "nguyen" (case insensitive)
+###
+
+### Search users by phone
+GET {{baseUrl}}/api/users?phone=0123
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có users có số điện thoại chứa "0123"
+###
+
+### Search users by multiple params (email + name)
+GET {{baseUrl}}/api/users?email=gmail&name=van
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có users thỏa mãn cả email chứa "gmail" VÀ tên chứa "van"
+###
+
+### Get users with pagination (page 1, default limit 10)
+GET {{baseUrl}}/api/users?page=1
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có max 10 users và pagination info
+###
+
+### Get users with custom limit (page 1, limit 5)
+GET {{baseUrl}}/api/users?page=1&limit=5
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có max 5 users và pagination info
+###
+
+### Get users with search and pagination
+GET {{baseUrl}}/api/users?email=gmail&page=1&limit=5
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có max 5 users có email chứa "gmail" và pagination info
+###
+
+### Get all users (TENANT - FORBIDDEN)
+GET {{baseUrl}}/api/users
 Authorization: Bearer {{tenant_token}}
-Content-Type: application/json
-
-{
-  "number": "101",
-  "building": "A",
-  "floor": 1,
-  "area": 25,
-  "price": 3500000
-}
 
 ###
 # EXPECT: 403 Forbidden
 ###
 
-#######################################
-### 6️⃣ TEST ROLE – OWNER GỌI API OWNER (OK)
-#######################################
-
-### Owner create room (SUCCESS)
-POST {{baseUrl}}/api/rooms
-Authorization: Bearer {{owner_token}}
-Content-Type: application/json
-
-{
-  "number": "101",
-  "building": "A",
-  "floor": 1,
-  "area": 25,
-  "price": 3500000
-}
+### Get all users (WITHOUT AUTH - FAIL)
+GET {{baseUrl}}/api/users
 
 ###
-# EXPECT: 201 Created
+# EXPECT: 401 Unauthorized
 ###
 
 #######################################
-### 7️⃣ TEST TOKEN INVALID
+### 8️⃣ TEST TOKEN INVALID
 #######################################
 
 ### Invalid token

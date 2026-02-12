@@ -1,17 +1,7 @@
 import { Request, Response } from "express";
 import * as AuthService from "../services/auth.service";
 import jwt from "jsonwebtoken";
-import TokenBlacklist from '../models/tokenBlacklist.model'
-
-
-export const register = async (req: Request, res: Response) => {
-  try {
-    const user = await AuthService.register(req.body);
-    res.status(201).json({ message: "Register success", user });
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
-  }
-}
+import TokenBlacklist from '../models/tokenBlacklist.model';
 
 export const login = async (req: Request, res: Response) => {
   try {

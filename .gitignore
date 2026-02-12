@@ -11,5 +11,5 @@ dist/
 coverage/
 
 # REST Client test file (VS Code)
-test.http
-*.http
+# test.http
+# *.http

@@ -78,11 +78,45 @@ export const getUser = async (req: Request, res: Response) => {
 
 export const getAllUsersController = async (req: Request, res: Response) => {
   try {
-    const users = await getAllUsers();
+    const { email, name, phone, page, limit } = req.query;
+
+    const searchParams: {
+      email?: string;
+      name?: string;
+      phone?: string;
+    } = {};
+
+    if (typeof email === "string") {
+      searchParams.email = email;
+    }
+
+    if (typeof name === "string") {
+      searchParams.name = name;
+    }
+
+    if (typeof phone === "string") {
+      searchParams.phone = phone;
+    }
+
+    const paginationParams: {
+      page?: number;
+      limit?: number;
+    } = {};
+
+    if (typeof page === "string") {
+      paginationParams.page = parseInt(page, 10);
+    }
+
+    if (typeof limit === "string") {
+      paginationParams.limit = parseInt(limit, 10);
+    }
+
+    const result = await getAllUsers(searchParams, paginationParams);
 
     return res.status(200).json({
       message: "Users retrieved successfully",
-      data: users,
+      data: result.users,
+      pagination: result.pagination,
     });
   } catch (error: any) {
     return res.status(500).json({

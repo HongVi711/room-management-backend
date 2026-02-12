@@ -1,25 +1,6 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsEnum, IsOptional } from "class-validator";
-import { ROLE } from "../utils/app.constants";
+import { IsEmail, IsNotEmpty, IsString } from "class-validator";
 
-export class RegisterDto {
-  @IsEmail({}, { message: "Email không hợp lệ" })
-  @IsNotEmpty()
-  email!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  name!: string;
-
-  @IsString()
-  @MinLength(6, { message: "Mật khẩu phải ít nhất 6 ký tự" })
-  password!: string;
-
-  // Nếu muốn cho phép chọn Role lúc đăng ký (optional)
-  // @IsOptional()
-  // @IsEnum(ROLE)
-  // role?: ROLE;
-}
-
+// --- INPUT DTOs ---
 export class LoginDto {
   @IsEmail()
   @IsNotEmpty()

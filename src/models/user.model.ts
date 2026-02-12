@@ -6,8 +6,14 @@ export interface IUser extends Document {
   name: string;
   password: string;
   role: ROLE;
-  phone?: number;
+  phone?: string;
   cccd?: string;
+  cccdImages: {
+    front: { url: string; publicId: string };
+    back: { url: string; publicId: string };
+  };
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const userSchema = new Schema<IUser>(
@@ -20,8 +26,18 @@ const userSchema = new Schema<IUser>(
       enum: [ROLE.TENANT, ROLE.OWNER],
       default: ROLE.TENANT,
     },
-    phone: { type: Number },
-    cccd: String,
+    phone: { type: String, default: "" },
+    cccd: { type: String, default: "" },
+    cccdImages: {
+      front: {
+        url: { type: String, default: "" },
+        publicId: { type: String, default: "" },
+      },
+      back: {
+        url: { type: String, default: "" },
+        publicId: { type: String, default: "" },
+      },
+    },
   },
   { timestamps: true },
 );

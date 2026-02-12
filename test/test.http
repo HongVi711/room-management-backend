@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:3000
 @tenant_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGRjOTNhYmJmMmM2YWI2ODFiYzBjZSIsInJvbGUiOjAsImlhdCI6MTc3MDkwMjQ0NiwiZXhwIjoxNzcxNTA3MjQ2fQ.WGj36k99j4nrEum2X1F57FLHVvlwzj2Mqnv2bWYnhmc
-@owner_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGRhNjFmNDBlNDJlMWRiOWJhN2EyZCIsInJvbGUiOjEsImlhdCI6MTc3MDkwMjcwMSwiZXhwIjoxNzcxNTA3NTAxfQ._On3GbYHhWP-pIoaaFD1cn59Tv3trn24j2sVx1IjMn8
+@owner_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGRhNjFmNDBlNDJlMWRiOWJhN2EyZCIsInJvbGUiOjEsImlhdCI6MTc3MDkxMTQ2NCwiZXhwIjoxNzcxNTE2MjY0fQ.f7u5U37UkztPSwI61HKPS91n5iAD9uROLqUSdgIoVvU
 
 #######################################
 ### 2️⃣ LOGIN TENANT
@@ -93,6 +93,69 @@ Authorization: Bearer {{owner_token}}
 ###
 # EXPECT: 200 OK
 # Response sẽ có danh sách tất cả users (không có password)
+###
+
+### Search users by email
+GET {{baseUrl}}/api/users?email=admin
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có users có email chứa "admin" (case insensitive)
+###
+
+### Search users by name
+GET {{baseUrl}}/api/users?name=nguyen
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có users có tên chứa "nguyen" (case insensitive)
+###
+
+### Search users by phone
+GET {{baseUrl}}/api/users?phone=0123
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có users có số điện thoại chứa "0123"
+###
+
+### Search users by multiple params (email + name)
+GET {{baseUrl}}/api/users?email=gmail&name=van
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có users thỏa mãn cả email chứa "gmail" VÀ tên chứa "van"
+###
+
+### Get users with pagination (page 1, default limit 10)
+GET {{baseUrl}}/api/users?page=1
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có max 10 users và pagination info
+###
+
+### Get users with custom limit (page 1, limit 5)
+GET {{baseUrl}}/api/users?page=1&limit=5
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có max 5 users và pagination info
+###
+
+### Get users with search and pagination
+GET {{baseUrl}}/api/users?email=gmail&page=1&limit=5
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có max 5 users có email chứa "gmail" và pagination info
 ###
 
 ### Get all users (TENANT - FORBIDDEN)

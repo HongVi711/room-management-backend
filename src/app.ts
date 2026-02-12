@@ -5,7 +5,6 @@ import morgan from "morgan";
 import authRoutes from "./routes/auth.route";
 import userRoutes from "./routes/user.route";
 
-
 const app = express();
 
 app.use(cors());

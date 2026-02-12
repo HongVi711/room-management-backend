@@ -65,7 +65,50 @@ export const getUserById = async (userId: string) => {
   return user;
 };
 
-export const getAllUsers = async () => {
-  const users = await User.find().select('-password');
-  return users;
+export const getAllUsers = async (searchParams?: {
+  email?: string;
+  name?: string;
+  phone?: string;
+}, pagination?: {
+  page?: number;
+  limit?: number;
+}) => {
+  let query: any = {};
+
+  // Build search query
+  if (searchParams?.email) {
+    query.email = { $regex: searchParams.email, $options: 'i' }; 
+  }
+
+  if (searchParams?.name) {
+    query.name = { $regex: searchParams.name, $options: 'i' };
+  }
+
+  if (searchParams?.phone) {
+    query.phone = { $regex: searchParams.phone, $options: 'i' };
+  }
+
+  const page = Math.max(1, pagination?.page || 1);
+  const limit = Math.min(100, Math.max(1, pagination?.limit || 10)); 
+  const skip = (page - 1) * limit;
+
+  const total = await User.countDocuments(query);
+  const totalPages = Math.ceil(total / limit);
+
+  const users = await User.find(query)
+    .select('-password')
+    .skip(skip)
+    .limit(limit);
+
+  return {
+    users,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1
+    }
+  };
 };

@@ -112,3 +112,12 @@ export const getAllUsers = async (searchParams?: {
     }
   };
 };
+
+export const deleteUser = async (userId: string) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error("User không tồn tại");
+  }
+  await User.findByIdAndDelete(userId);
+  return { message: "User đã được xóa" };
+};

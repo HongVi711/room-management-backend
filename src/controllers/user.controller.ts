@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { UserService, getUserById, getAllUsers } from "../services/user.service";
+import { UserService, getUserById, getAllUsers, deleteUser } from "../services/user.service";
 import { ROLE } from "../utils/app.constants";
 
 export const createUser = async (req: Request, res: Response) => {
@@ -48,7 +48,6 @@ export const getUser = async (req: Request, res: Response) => {
       });
     }
 
-    // Check quyền truy cập
     if (currentUser.role === ROLE.TENANT && currentUser.id !== id) {
       return res.status(403).json({
         message: "You can only view your own profile",
@@ -118,6 +117,33 @@ export const getAllUsersController = async (req: Request, res: Response) => {
       data: result.users,
       pagination: result.pagination,
     });
+  } catch (error: any) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+export const deleteUserController = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const currentUser = (req as any).user;
+
+    if (currentUser.role !== ROLE.OWNER) {
+      return res.status(403).json({
+        message: "Only owners can delete users",
+      });
+    }
+
+    if (!id || typeof id !== "string") {
+      return res.status(400).json({
+        message: "Invalid user id",
+      });
+    }
+
+    const result = await deleteUser(id);
+
+    return res.status(200).json(result);
   } catch (error: any) {
     return res.status(500).json({
       message: error.message,

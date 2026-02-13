@@ -1,4 +1,4 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, model, Document, Types } from "mongoose";
 
 export interface IBuilding extends Document {
   name: string;
@@ -8,7 +8,7 @@ export interface IBuilding extends Document {
   totalFloors: number;
   totalRooms: number;
   yearBuilt: number;
-  ownerId: string; 
+  ownerId: Types.ObjectId; 
   description?: string;
   utilities?: string[];
   createdAt: Date;
@@ -24,7 +24,7 @@ const buildingSchema = new Schema<IBuilding>(
     totalFloors: { type: Number, required: true },
     totalRooms: { type: Number, required: true },
     yearBuilt: { type: Number, required: true },
-    ownerId: { type: String, required: true },
+    ownerId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     description: { type: String, default: "" },
     utilities: { type: [String], default: [] },
   },

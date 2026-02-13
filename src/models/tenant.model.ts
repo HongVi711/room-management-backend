@@ -2,10 +2,7 @@ import { Schema, model, Document, Types } from "mongoose";
 import { TenantStatus } from "../utils/app.constants";
 
 export interface ITenant extends Document {
-  name: string;
-  email: string;
-  phone: string;
-  idNumber: string;
+  userId: Types.ObjectId;
   roomId: Types.ObjectId;
   moveInDate: Date;
   contractEndDate: Date;
@@ -15,10 +12,7 @@ export interface ITenant extends Document {
 
 const tenantSchema = new Schema<ITenant>(
   {
-    name: { type: String, required: true },
-    email: { type: String, required: true },
-    phone: { type: String, required: true },
-    idNumber: { type: String, required: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     roomId: { type: Schema.Types.ObjectId, ref: "Room", required: true },
     moveInDate: { type: Date, required: true },
     contractEndDate: { type: Date, required: true },

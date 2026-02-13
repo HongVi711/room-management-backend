@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createUser, getUser, getAllUsersController } from "../controllers/user.controller";
+import { createUser, getUser, getAllUsersController, deleteUserController } from "../controllers/user.controller";
 import { uploadCloud } from "../config/cloudinary.config";
 import { validateDto } from "../middlewares/validate.middleware";
 import { CreateUserDto } from "../dtos/user.dto";
@@ -19,5 +19,7 @@ router.post("/create", authMiddleware, requireRole([ROLE.OWNER]), uploadFields, 
 router.get("/", authMiddleware, requireRole([ROLE.OWNER]), getAllUsersController);
 
 router.get("/:id", authMiddleware, requireRole([ROLE.OWNER, ROLE.TENANT]), getUser);
+
+router.delete("/:id", authMiddleware, requireRole([ROLE.OWNER]), deleteUserController);
 
 export default router;

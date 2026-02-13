@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:3000
-@tenant_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGRjOTNhYmJmMmM2YWI2ODFiYzBjZSIsInJvbGUiOjAsImlhdCI6MTc3MDkwMjQ0NiwiZXhwIjoxNzcxNTA3MjQ2fQ.WGj36k99j4nrEum2X1F57FLHVvlwzj2Mqnv2bWYnhmc
-@owner_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGRhNjFmNDBlNDJlMWRiOWJhN2EyZCIsInJvbGUiOjEsImlhdCI6MTc3MDkxMTQ2NCwiZXhwIjoxNzcxNTE2MjY0fQ.f7u5U37UkztPSwI61HKPS91n5iAD9uROLqUSdgIoVvU
+@tenant_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGRjOTNhYmJmMmM2YWI2ODFiYzBjZSIsInJvbGUiOjAsImlhdCI6MTc3MDk4MDc2MywiZXhwIjoxNzcxNTg1NTYzfQ.W-k_X0sbUVPe8Tbhtq4WUNOqTznCbgVvWQVGeRl6jWo
+@owner_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGRhNjFmNDBlNDJlMWRiOWJhN2EyZCIsInJvbGUiOjEsImlhdCI6MTc3MDk4MDg3MSwiZXhwIjoxNzcxNTg1NjcxfQ.3O2-1rb5fXscSKKgDWA_-_pND298_sv1HyUwCBSWDIE
 
 #######################################
 ### 2️⃣ LOGIN TENANT
@@ -333,13 +333,181 @@ Authorization: Bearer {{tenant_token}}
 ###
 
 #######################################
-### 10️⃣ TEST TOKEN INVALID
+### 11️⃣ TEST ROOM API
 #######################################
 
-### Invalid token
-GET {{baseUrl}}/api/rooms
-Authorization: Bearer abc.def.xyz
+### Create room (SUCCESS - OWNER)
+POST {{baseUrl}}/api/rooms
+Authorization: Bearer {{owner_token}}
+Content-Type: application/json
+
+{
+  "number": "101",
+  "buildingId": "698ed98d24f5a32a41e3fde4",
+  "floor": 1,
+  "area": 50,
+  "price": 5000000,
+  "description": "Phòng 101"
+}
 
 ###
-# EXPECT: 401 Invalid token
+# EXPECT: 201 Created
+# Response sẽ có room data
+###
+
+### Create room (TENANT - FORBIDDEN)
+POST {{baseUrl}}/api/rooms
+Authorization: Bearer {{tenant_token}}
+Content-Type: application/json
+
+{
+  "number": "102",
+  "buildingId": "698ed98d24f5a32a41e3fde4",
+  "floor": 1,
+  "area": 50,
+  "price": 5000000
+}
+
+###
+# EXPECT: 403 Forbidden
+###
+
+### Create room in non-existent building
+POST {{baseUrl}}/api/rooms
+Authorization: Bearer {{owner_token}}
+Content-Type: application/json
+
+{
+  "number": "103",
+  "buildingId": "507f1f77bcf86cd799439011",
+  "floor": 1,
+  "area": 50,
+  "price": 5000000
+}
+
+###
+# EXPECT: 404 Not Found
+###
+
+### Create room without auth
+POST {{baseUrl}}/api/rooms
+Content-Type: application/json
+
+{
+  "number": "104",
+  "buildingId": "698ed98d24f5a32a41e3fde4",
+  "floor": 1,
+  "area": 50,
+  "price": 5000000
+}
+
+###
+# EXPECT: 401 Unauthorized
+###
+
+### Update room (SUCCESS - OWNER)
+PUT {{baseUrl}}/api/rooms/{room_id}
+Authorization: Bearer {{owner_token}}
+Content-Type: application/json
+
+{
+  "price": 6000000,
+  "description": "Phòng 101 - cập nhật"
+}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có room data đã cập nhật
+# Note: Replace {room_id} with the ID from the successful create response
+###
+
+### Update room (TENANT - FORBIDDEN)
+PUT {{baseUrl}}/api/rooms/{room_id}
+Authorization: Bearer {{tenant_token}}
+Content-Type: application/json
+
+{
+  "price": 7000000
+}
+
+###
+# EXPECT: 403 Forbidden
+###
+
+### Update room (NOT FOUND)
+PUT {{baseUrl}}/api/rooms/507f1f77bcf86cd799439011
+Authorization: Bearer {{owner_token}}
+Content-Type: application/json
+
+{
+  "price": 8000000
+}
+
+###
+# EXPECT: 404 Not Found
+###
+
+### Assign tenant (SUCCESS - OWNER)
+POST {{baseUrl}}/api/rooms/{room_id}/assign-tenant
+Authorization: Bearer {{owner_token}}
+Content-Type: application/json
+
+{
+  "userId": "698dc93abb72c6ab681bc0ce"
+}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có room data với currentTenant và status OCCUPIED
+###
+
+### Assign tenant (TENANT - FORBIDDEN)
+POST {{baseUrl}}/api/rooms/{room_id}/assign-tenant
+Authorization: Bearer {{tenant_token}}
+Content-Type: application/json
+
+{
+  "userId": "698dc93abb72c6ab681bc0ce"
+}
+
+###
+# EXPECT: 403 Forbidden
+###
+
+### Assign tenant (NOT FOUND)
+POST {{baseUrl}}/api/rooms/507f1f77bcf86cd799439011/assign-tenant
+Authorization: Bearer {{owner_token}}
+Content-Type: application/json
+
+{
+  "userId": "698dc93abb72c6ab681bc0ce"
+}
+
+###
+# EXPECT: 404 Not Found
+###
+
+### Delete room (TENANT - FORBIDDEN)
+DELETE {{baseUrl}}/api/rooms/{room_id}
+Authorization: Bearer {{tenant_token}}
+
+###
+# EXPECT: 403 Forbidden
+###
+
+### Delete room (NOT FOUND)
+DELETE {{baseUrl}}/api/rooms/507f1f77bcf86cd799439011
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 404 Not Found
+###
+
+### Delete room (SUCCESS - OWNER)
+DELETE {{baseUrl}}/api/rooms/{room_id}
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có room data đã xóa
 ###

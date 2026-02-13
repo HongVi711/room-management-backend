@@ -3,7 +3,7 @@ import { ROOMSTATUS } from "../utils/app.constants";
 
 export interface IRoom extends Document {
   number: string;
-  building: Types.ObjectId;
+  buildingId: Types.ObjectId;
   floor: number;
   area: number;
   price: number;
@@ -15,7 +15,7 @@ export interface IRoom extends Document {
 const roomSchema = new Schema<IRoom>(
   {
     number: { type: String, required: true },
-    building: { type: Schema.Types.ObjectId, ref: "Building", required: true },
+    buildingId: { type: Schema.Types.ObjectId, ref: "Building", required: true },
     floor: { type: Number, required: true },
     area: { type: Number, required: true },
     price: { type: Number, required: true },
@@ -25,7 +25,7 @@ const roomSchema = new Schema<IRoom>(
       default: ROOMSTATUS.AVAILABLE,
       required: true,
     },
-    currentTenant: { type: Schema.Types.ObjectId, ref: "Tenant" },
+    currentTenant: { type: Schema.Types.ObjectId, ref: "User" },
     description: String,
   },
   { timestamps: true }

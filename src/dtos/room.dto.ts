@@ -6,7 +6,7 @@ export class CreateRoomDto {
   number!: string;
 
   @IsString()
-  building!: string;
+  buildingId!: string;
 
   @IsNumber()
   floor!: number;
@@ -19,8 +19,9 @@ export class CreateRoomDto {
   @Min(0)
   price!: number;
 
+  @IsOptional()
   @IsEnum(ROOMSTATUS)
-  status!: ROOMSTATUS;
+  status?: ROOMSTATUS;
 
   @IsOptional()
   @IsString()
@@ -45,7 +46,7 @@ export class UpdateRoomDto {
   price?: number;
 
   @IsOptional()
-  @IsEnum(["available", "occupied", "maintenance"])
+  @IsEnum(ROOMSTATUS)
   status?: ROOMSTATUS;
 
   @IsOptional()
@@ -55,4 +56,9 @@ export class UpdateRoomDto {
   @IsOptional()
   @IsString()
   description?: string;
+}
+
+export class AssignTenantDto {
+  @IsString()
+  userId!: string;
 }

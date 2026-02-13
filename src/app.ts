@@ -4,6 +4,7 @@ import cors from "cors";
 import morgan from "morgan";
 import authRoutes from "./routes/auth.route";
 import userRoutes from "./routes/user.route";
+import buildingRoutes from "./routes/building.route";
 
 const app = express();
 
@@ -17,5 +18,6 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/buildings", buildingRoutes);
 
 export default app;

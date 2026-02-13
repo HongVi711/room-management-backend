@@ -174,7 +174,166 @@ GET {{baseUrl}}/api/users
 ###
 
 #######################################
-### 8️⃣ TEST TOKEN INVALID
+### 9️⃣ TEST BUILDING API
+#######################################
+
+### Create building (SUCCESS - OWNER)
+POST {{baseUrl}}/api/buildings
+Authorization: Bearer {{owner_token}}
+Content-Type: application/json
+
+{
+  "name": "Chung cư ABC",
+  "address": "123 Đường ABC",
+  "district": "Quận 1",
+  "city": "TP.HCM",
+  "totalFloors": 10,
+  "totalRooms": 50,
+  "yearBuilt": 2020,
+  "description": "Chung cư cao cấp",
+  "utilities": ["Gym", "Swimming Pool", "Parking"]
+}
+
+###
+# EXPECT: 201 Created
+# Response sẽ có building data với ownerId = current user id
+###
+
+### Get building by ID (SUCCESS - OWNER)
+GET {{baseUrl}}/api/buildings/698ed98d24f5a32a41e3fde4
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có building data
+###
+
+### Get all buildings (SUCCESS - OWNER)
+GET {{baseUrl}}/api/buildings
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có tất cả buildings và pagination info
+###
+
+### Search buildings by name
+GET {{baseUrl}}/api/buildings?name=chung
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có buildings có tên chứa "chung" (case insensitive)
+###
+
+### Search buildings by address
+GET {{baseUrl}}/api/buildings?address=abc
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có buildings có địa chỉ chứa "abc" (case insensitive)
+###
+
+### Search buildings by district
+GET {{baseUrl}}/api/buildings?district=quan
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có buildings có quận chứa "quan" (case insensitive)
+###
+
+### Search buildings by city
+GET {{baseUrl}}/api/buildings?city=hcm
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có buildings có thành phố chứa "hcm" (case insensitive)
+###
+
+### Get buildings with pagination (page 1, default limit 10)
+GET {{baseUrl}}/api/buildings?page=1
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có max 10 buildings và pagination info
+###
+
+### Get buildings with custom limit (page 1, limit 5)
+GET {{baseUrl}}/api/buildings?page=1&limit=5
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có max 5 buildings và pagination info
+###
+
+### Get buildings with search and pagination
+GET {{baseUrl}}/api/buildings?name=chung&page=1&limit=5
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có max 5 buildings có tên chứa "chung" và pagination info
+###
+
+### Update building (SUCCESS - OWNER)
+PUT {{baseUrl}}/api/buildings/698ed98d24f5a32a41e3fde4
+Authorization: Bearer {{owner_token}}
+Content-Type: application/json
+
+{
+  "name": "Chung cư ABC Updated",
+  "description": "Chung cư cao cấp - đã cập nhật"
+}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có building data đã cập nhật
+###
+
+### Delete building (SUCCESS - OWNER)
+DELETE {{baseUrl}}/api/buildings/698ed98d24f5a32a41e3fde4
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có building data đã xóa
+###
+
+### Create building (TENANT - FORBIDDEN)
+POST {{baseUrl}}/api/buildings
+Authorization: Bearer {{tenant_token}}
+Content-Type: application/json
+
+{
+  "name": "Building by Tenant",
+  "address": "456 Đường XYZ",
+  "district": "Quận 2",
+  "city": "TP.HCM",
+  "totalFloors": 5,
+  "totalRooms": 20,
+  "yearBuilt": 2022
+}
+
+###
+# EXPECT: 403 Forbidden
+###
+
+### Get building by ID (TENANT - FORBIDDEN)
+GET {{baseUrl}}/api/buildings/698ed98d24f5a32a41e3fde4
+Authorization: Bearer {{tenant_token}}
+
+###
+# EXPECT: 403 Forbidden
+# TENANT không thể xem building details
+###
+
+#######################################
+### 10️⃣ TEST TOKEN INVALID
 #######################################
 
 ### Invalid token

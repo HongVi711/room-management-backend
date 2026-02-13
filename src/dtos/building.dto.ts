@@ -22,14 +22,43 @@ export class CreateBuildingDto {
   @IsNumber()
   yearBuilt!: number;
 
+  @IsOptional()
   @IsString()
-  owner!: string;
+  description?: string;
 
+  @IsOptional()
+  @IsArray()
+  utilities?: string[];
+}
+
+export class UpdateBuildingDto {
+  @IsOptional()
   @IsString()
-  phone!: string;
+  name?: string;
 
-  @IsEmail()
-  email!: string;
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @IsOptional()
+  @IsString()
+  district?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsNumber()
+  totalFloors?: number;
+
+  @IsOptional()
+  @IsNumber()
+  totalRooms?: number;
+
+  @IsOptional()
+  @IsNumber()
+  yearBuilt?: number;
 
   @IsOptional()
   @IsString()
@@ -37,5 +66,6 @@ export class CreateBuildingDto {
 
   @IsOptional()
   @IsArray()
+  @IsString({ each: true })
   utilities?: string[];
 }

@@ -57,3 +57,63 @@ export const assignTenant = async (roomId: string, userId: string, ownerId: stri
 
   return room;
 };
+
+export const getAllRooms = async (
+  searchParams?: {
+    number?: string;
+    buildingId?: string;
+    floor?: number;
+    status?: ROOMSTATUS;
+  },
+  pagination?: {
+    page?: number;
+    limit?: number;
+  }
+) => {
+  let query: any = {};
+
+  // Build search query
+  if (searchParams?.number) {
+    query.number = { $regex: searchParams.number, $options: 'i' };
+  }
+
+  if (searchParams?.buildingId) {
+    query.buildingId = new Types.ObjectId(searchParams.buildingId);
+  }
+
+  if (searchParams?.floor !== undefined) {
+    query.floor = searchParams.floor;
+  }
+
+  if (searchParams?.status) {
+    query.status = searchParams.status;
+  }
+
+  // Pagination settings
+  const page = Math.max(1, pagination?.page || 1);
+  const limit = Math.min(100, Math.max(1, pagination?.limit || 10));
+  const skip = (page - 1) * limit;
+
+  // Get total count for pagination info
+  const total = await Room.countDocuments(query);
+  const totalPages = Math.ceil(total / limit);
+
+  // Get paginated results
+  const rooms = await Room.find(query)
+    .populate('buildingId', 'name')
+    .populate('currentTenant', 'name email')
+    .skip(skip)
+    .limit(limit);
+
+  return {
+    rooms,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1
+    }
+  };
+};

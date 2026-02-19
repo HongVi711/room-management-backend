@@ -355,6 +355,85 @@ Content-Type: application/json
 # Response sẽ có room data
 ###
 
+### Get all rooms (SUCCESS - OWNER)
+GET {{baseUrl}}/api/rooms
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có danh sách rooms và pagination info
+###
+
+### Get all rooms (TENANT - FORBIDDEN)
+GET {{baseUrl}}/api/rooms
+Authorization: Bearer {{tenant_token}}
+
+###
+# EXPECT: 403 Forbidden
+# Chỉ chủ mới có thể xem danh sách phòng
+###
+
+### Search rooms by number
+GET {{baseUrl}}/api/rooms?number=101
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có rooms có số phòng chứa "101" (case insensitive)
+###
+
+### Search rooms by building ID
+GET {{baseUrl}}/api/rooms?buildingId=698ed98d24f5a32a41e3fde4
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có rooms thuộc tòa nhà có ID này
+###
+
+### Search rooms by floor
+GET {{baseUrl}}/api/rooms?floor=1
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có rooms ở tầng 1
+###
+
+### Search rooms by status
+GET {{baseUrl}}/api/rooms?status=available
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có rooms có trạng thái "available"
+###
+
+### Get rooms with pagination (page 1, default limit)
+GET {{baseUrl}}/api/rooms?page=1
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có max 10 rooms và pagination info
+###
+
+### Get rooms with custom limit (page 1, limit 5)
+GET {{baseUrl}}/api/rooms?page=1&limit=5
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có max 5 rooms và pagination info
+###
+
+### Get rooms without auth
+GET {{baseUrl}}/api/rooms
+
+###
+# EXPECT: 401 Unauthorized
+###
+
 ### Create room (TENANT - FORBIDDEN)
 POST {{baseUrl}}/api/rooms
 Authorization: Bearer {{tenant_token}}

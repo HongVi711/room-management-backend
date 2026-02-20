@@ -10,6 +10,25 @@ export const createBuilding = async (
   data: CreateBuildingInput,
 ): Promise<IBuilding> => {
   const building = await Building.create(data);
+
+  // Automatically create rooms based on totalRooms
+  const rooms = [];
+  for (let i = 1; i <= data.totalRooms; i++) {
+    rooms.push({
+      number: `${data.name}_room${i}`,
+      buildingId: building._id,
+      floor: Math.ceil(i / 10), // Default: 10 rooms per floor
+      area: 25, // Default area
+      price: 3000000, // Default price
+      status: 'available',
+      description: `Room ${i} in ${data.name}`,
+    });
+  }
+
+  if (rooms.length > 0) {
+    await roomModel.insertMany(rooms);
+  }
+
   return building;
 };
 

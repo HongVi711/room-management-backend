@@ -1,13 +1,8 @@
 import Room, { IRoom } from "../models/room.model";
-import { CreateRoomDto, UpdateRoomDto } from "../dtos/room.dto";
+import { UpdateRoomDto } from "../dtos/room.dto";
 import { getBuildingById } from "./building.service";
 import { ROOMSTATUS } from "../utils/app.constants";
 import { Types } from "mongoose";
-
-export const createRoom = async (data: CreateRoomDto): Promise<IRoom> => {
-  const room = await Room.create(data);
-  return room;
-};
 
 export const updateRoom = async (
   roomId: string,

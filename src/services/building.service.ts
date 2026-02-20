@@ -10,6 +10,25 @@ export const createBuilding = async (
   data: CreateBuildingInput,
 ): Promise<IBuilding> => {
   const building = await Building.create(data);
+
+  // Automatically create rooms based on totalRooms
+  const rooms = [];
+  for (let i = 1; i <= data.totalRooms; i++) {
+    rooms.push({
+      number: `${data.name}_room${i}`,
+      buildingId: building._id,
+      floor: Math.ceil(i / 10), // Default: 10 rooms per floor
+      area: 25, // Default area
+      price: 3000000, // Default price
+      status: 'available',
+      description: `Room ${i} in ${data.name}`,
+    });
+  }
+
+  if (rooms.length > 0) {
+    await roomModel.insertMany(rooms);
+  }
+
   return building;
 };
 
@@ -26,64 +45,6 @@ export const getBuildingsByOwner = async (
   const buildings = await Building.find({ ownerId: ownerId });
   return buildings;
 };
-
-// export const getAllBuildings = async (
-//   searchParams?: {
-//     name?: string;
-//     address?: string;
-//     district?: string;
-//     city?: string;
-//   },
-//   pagination?: {
-//     page?: number;
-//     limit?: number;
-//   }
-// ) => {
-//   let query: any = {};
-
-//   // Build search query
-//   if (searchParams?.name) {
-//     query.name = { $regex: searchParams.name, $options: 'i' }; // Case insensitive
-//   }
-
-//   if (searchParams?.address) {
-//     query.address = { $regex: searchParams.address, $options: 'i' };
-//   }
-
-//   if (searchParams?.district) {
-//     query.district = { $regex: searchParams.district, $options: 'i' };
-//   }
-
-//   if (searchParams?.city) {
-//     query.city = { $regex: searchParams.city, $options: 'i' };
-//   }
-
-//   // Pagination settings
-//   const page = Math.max(1, pagination?.page || 1); // Default page 1
-//   const limit = Math.min(100, Math.max(1, pagination?.limit || 10)); // Default 10, max 100
-//   const skip = (page - 1) * limit;
-
-//   // Get total count for pagination info
-//   const total = await Building.countDocuments(query);
-//   const totalPages = Math.ceil(total / limit);
-
-//   // Get paginated results
-//   const buildings = await Building.find(query)
-//     .skip(skip)
-//     .limit(limit);
-
-//   return {
-//     buildings,
-//     pagination: {
-//       page,
-//       limit,
-//       total,
-//       totalPages,
-//       hasNext: page < totalPages,
-//       hasPrev: page > 1
-//     }
-//   };
-// };
 
 export const getAllBuildings = async (
   searchParams?: {

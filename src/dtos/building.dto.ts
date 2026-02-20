@@ -19,8 +19,9 @@ export class CreateBuildingDto {
   @IsNumber()
   totalRooms!: number;
 
+  @IsOptional()
   @IsNumber()
-  yearBuilt!: number;
+  yearBuilt?: number;
 
   @IsOptional()
   @IsString()

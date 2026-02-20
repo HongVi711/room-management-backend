@@ -183,15 +183,15 @@ Authorization: Bearer {{owner_token}}
 Content-Type: application/json
 
 {
-  "name": "Chung cư Vạn Phúc",
-  "address": "123 Đường Vạn Phúc",
-  "district": "Quận 2",
+  "name": "Toà nhà Green Park",
+  "address": "789 Lê Văn Việt",
+  "district": "Quận 9",
   "city": "TP.HCM",
-  "totalFloors": 10,
-  "totalRooms": 50,
-  "yearBuilt": 2023,
-  "description": "Chung cư cao cấp",
-  "utilities": ["Gym", "Swimming Pool", "Parking"]
+  "totalFloors": 5,
+  "totalRooms": 20,
+  "yearBuilt": 2019,
+  "description": "Toà nhà phù hợp cho sinh viên và nhân viên văn phòng",
+  "utilities": ["Parking", "WiFi", "Laundry Room"]
 }
 
 ###

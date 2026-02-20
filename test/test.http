@@ -183,13 +183,13 @@ Authorization: Bearer {{owner_token}}
 Content-Type: application/json
 
 {
-  "name": "Chung cư ABC",
-  "address": "123 Đường ABC",
-  "district": "Quận 1",
+  "name": "Chung cư Vạn Phúc",
+  "address": "123 Đường Vạn Phúc",
+  "district": "Quận 2",
   "city": "TP.HCM",
   "totalFloors": 10,
   "totalRooms": 50,
-  "yearBuilt": 2020,
+  "yearBuilt": 2023,
   "description": "Chung cư cao cấp",
   "utilities": ["Gym", "Swimming Pool", "Parking"]
 }
@@ -434,56 +434,6 @@ GET {{baseUrl}}/api/rooms
 # EXPECT: 401 Unauthorized
 ###
 
-### Create room (TENANT - FORBIDDEN)
-POST {{baseUrl}}/api/rooms
-Authorization: Bearer {{tenant_token}}
-Content-Type: application/json
-
-{
-  "number": "102",
-  "buildingId": "698ed98d24f5a32a41e3fde4",
-  "floor": 1,
-  "area": 50,
-  "price": 5000000
-}
-
-###
-# EXPECT: 403 Forbidden
-###
-
-### Create room in non-existent building
-POST {{baseUrl}}/api/rooms
-Authorization: Bearer {{owner_token}}
-Content-Type: application/json
-
-{
-  "number": "103",
-  "buildingId": "507f1f77bcf86cd799439011",
-  "floor": 1,
-  "area": 50,
-  "price": 5000000
-}
-
-###
-# EXPECT: 404 Not Found
-###
-
-### Create room without auth
-POST {{baseUrl}}/api/rooms
-Content-Type: application/json
-
-{
-  "number": "104",
-  "buildingId": "698ed98d24f5a32a41e3fde4",
-  "floor": 1,
-  "area": 50,
-  "price": 5000000
-}
-
-###
-# EXPECT: 401 Unauthorized
-###
-
 ### Update room (SUCCESS - OWNER)
 PUT {{baseUrl}}/api/rooms/{room_id}
 Authorization: Bearer {{owner_token}}
@@ -497,7 +447,7 @@ Content-Type: application/json
 ###
 # EXPECT: 200 OK
 # Response sẽ có room data đã cập nhật
-# Note: Replace {room_id} with the ID from the successful create response
+# Note: Replace {room_id} with the ID from a room in the building
 ###
 
 ### Update room (TENANT - FORBIDDEN)

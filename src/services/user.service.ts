@@ -15,8 +15,6 @@ interface CreateUserInput {
 
 export const UserService = async (data: CreateUserInput) => {
   const { email, password, phone, cccd, cccdFront, cccdBack } = data;
-
-  // Nếu không có password, dùng số điện thoại làm password
   const userPassword = password || phone;
 
   if (!userPassword) {
@@ -82,7 +80,6 @@ export const getAllUsers = async (searchParams?: {
 }) => {
   let query: any = {};
 
-  // Build search query
   if (searchParams?.email) {
     query.email = { $regex: searchParams.email, $options: 'i' }; 
   }
@@ -127,4 +124,39 @@ export const deleteUser = async (userId: string) => {
   }
   await User.findByIdAndDelete(userId);
   return { message: "User đã được xóa" };
+};
+
+export const updateUser = async (userId: string, updateData: Partial<CreateUserInput>) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error("User không tồn tại");
+  }
+
+  // Check for email uniqueness if email is being updated
+  if (updateData.email && updateData.email !== user.email) {
+    const existingEmail = await User.findOne({ email: updateData.email });
+    if (existingEmail) {
+      throw new Error("Email đã tồn tại");
+    }
+  }
+
+  // Check for phone uniqueness if phone is being updated
+  if (updateData.phone && updateData.phone !== user.phone) {
+    const existingPhone = await User.findOne({ phone: updateData.phone });
+    if (existingPhone) {
+      throw new Error("Số điện thoại đã tồn tại");
+    }
+  }
+
+  // Check for CCCD uniqueness if CCCD is being updated
+  if (updateData.cccd && updateData.cccd !== user.cccd) {
+    const existingCccd = await User.findOne({ cccd: updateData.cccd });
+    if (existingCccd) {
+      throw new Error("Số CCCD đã tồn tại");
+    }
+  }
+
+  // Update user
+  const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
+  return updatedUser;
 };

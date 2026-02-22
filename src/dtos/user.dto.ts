@@ -33,3 +33,29 @@ export class CreateUserDto {
   @Matches(/^[0-9]{9,12}$/, { message: "CCCD phải từ 9-12 số" })
   cccd?: string;
 }
+
+export class UpdateUserDto {
+  @IsOptional()
+  @IsEmail({}, { message: "Email không hợp lệ" })
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(2, 100)
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^[0-9]{9,11}$/, { message: "Số điện thoại phải từ 9-11 số" })
+  phone?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsEnum(ROLE)
+  role?: ROLE;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^[0-9]{9,12}$/, { message: "CCCD phải từ 9-12 số" })
+  cccd?: string;
+}

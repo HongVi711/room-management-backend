@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { UserService, getUserById, getAllUsers, deleteUser } from "../services/user.service";
+import { UserService, getUserById, getAllUsers, deleteUser, updateUser } from "../services/user.service";
 import { ROLE } from "../utils/app.constants";
 
 export const createUser = async (req: Request, res: Response) => {
@@ -144,6 +144,74 @@ export const deleteUserController = async (req: Request, res: Response) => {
     const result = await deleteUser(id);
 
     return res.status(200).json(result);
+  } catch (error: any) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+export const updateUserController = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const currentUser = (req as any).user;
+
+    // Owners can update any user, tenants can only update themselves
+    if (currentUser.role === ROLE.TENANT && currentUser.id !== id) {
+      return res.status(403).json({
+        message: "You can only update your own profile",
+      });
+    }
+
+    if (!id || typeof id !== "string") {
+      return res.status(400).json({
+        message: "Invalid user id",
+      });
+    }
+
+    // Handle file uploads for cccdImages if provided
+    const files = req.files as {
+      [fieldname: string]: Express.Multer.File[];
+    };
+
+    const cccdImages: any = {};
+    const frontFile = files?.cccdFront?.[0];
+    const backFile = files?.cccdBack?.[0];
+
+    if (frontFile) {
+      cccdImages.cccdImages = {
+        ...cccdImages.cccdImages,
+        front: {
+          url: frontFile.path,
+          publicId: frontFile.filename
+        }
+      };
+    }
+
+    if (backFile) {
+      cccdImages.cccdImages = {
+        ...cccdImages.cccdImages,
+        back: {
+          url: backFile.path,
+          publicId: backFile.filename
+        }
+      };
+    }
+
+    const updatedUser = await updateUser(id, { ...req.body, ...cccdImages });
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    const { password, ...userResponse } = updatedUser.toObject();
+
+    return res.status(200).json({
+      message: "User updated successfully",
+      data: userResponse,
+    });
   } catch (error: any) {
     return res.status(500).json({
       message: error.message,

@@ -1,8 +1,9 @@
 import Room, { IRoom } from "../models/room.model";
 import { UpdateRoomDto } from "../dtos/room.dto";
 import { getBuildingById } from "./building.service";
-import { ROOMSTATUS } from "../utils/app.constants";
+import { ROOMSTATUS, TenantStatus } from "../utils/app.constants";
 import { Types } from "mongoose";
+import Tenant from "../models/tenant.model";
 
 export const updateRoom = async (
   roomId: string,
@@ -34,7 +35,16 @@ export const deleteRoom = async (roomId: string, ownerId: string): Promise<IRoom
   return deletedRoom;
 };
 
-export const assignTenant = async (roomId: string, userId: string, ownerId: string): Promise<IRoom | null> => {
+export const assignTenant = async (
+  roomId: string, 
+  userId: string, 
+  ownerId: string,
+  contractData?: {
+    moveInDate?: Date;
+    contractEndDate?: Date;
+    emergencyContact?: string;
+  }
+): Promise<IRoom | null> => {
   const room = await Room.findById(roomId);
   if (!room) return null;
 
@@ -44,6 +54,16 @@ export const assignTenant = async (roomId: string, userId: string, ownerId: stri
   if (room.status !== ROOMSTATUS.AVAILABLE) {
     throw new Error("Room is not available for assignment");
   }
+
+  // Create tenant record with contract information
+  await Tenant.create({
+    userId: new Types.ObjectId(userId),
+    roomId: new Types.ObjectId(roomId),
+    moveInDate: contractData?.moveInDate || new Date(),
+    contractEndDate: contractData?.contractEndDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // Default 1 year
+    emergencyContact: contractData?.emergencyContact || "",
+    status: TenantStatus.ACTIVE
+  });
 
   // Assign user to room
   room.currentTenant = new Types.ObjectId(userId);

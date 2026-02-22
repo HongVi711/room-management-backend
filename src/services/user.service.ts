@@ -5,7 +5,7 @@ import { ROLE } from "../utils/app.constants";
 interface CreateUserInput {
   email: string;
   name: string;
-  password: string;
+  password?: string;
   phone?: string;
   role?: ROLE;
   cccd?: string;
@@ -15,6 +15,13 @@ interface CreateUserInput {
 
 export const UserService = async (data: CreateUserInput) => {
   const { email, password, phone, cccd, cccdFront, cccdBack } = data;
+
+  // Nếu không có password, dùng số điện thoại làm password
+  const userPassword = password || phone;
+
+  if (!userPassword) {
+    throw new Error("Password hoặc số điện thoại là bắt buộc");
+  }
 
   const existingEmail = await User.findOne({ email });
   if (existingEmail) {
@@ -35,7 +42,7 @@ export const UserService = async (data: CreateUserInput) => {
     }
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(userPassword, 10);
 
   const newUser = await User.create({
     ...data,

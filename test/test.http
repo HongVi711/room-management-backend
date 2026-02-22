@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:3000
 @tenant_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGRjOTNhYmJmMmM2YWI2ODFiYzBjZSIsInJvbGUiOjAsImlhdCI6MTc3MDk4MDc2MywiZXhwIjoxNzcxNTg1NTYzfQ.W-k_X0sbUVPe8Tbhtq4WUNOqTznCbgVvWQVGeRl6jWo
-@owner_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGRhNjFmNDBlNDJlMWRiOWJhN2EyZCIsInJvbGUiOjEsImlhdCI6MTc3MDk4MDg3MSwiZXhwIjoxNzcxNTg1NjcxfQ.3O2-1rb5fXscSKKgDWA_-_pND298_sv1HyUwCBSWDIE
+@owner_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGRhNjFmNDBlNDJlMWRiOWJhN2EyZCIsInJvbGUiOjEsImlhdCI6MTc3MTY0Nzc0NywiZXhwIjoxNzcyMjUyNTQ3fQ.38_PsSvevAsCu4LWK9pKkRGLs09h_nmbR15pJ3mJ9-4
 
 #######################################
 ### 2️⃣ LOGIN TENANT
@@ -477,12 +477,15 @@ Content-Type: application/json
 ###
 
 ### Assign tenant (SUCCESS - OWNER)
-POST {{baseUrl}}/api/rooms/{room_id}/assign-tenant
+POST {{baseUrl}}/api/rooms/69981d9e46c8af57f060929c/assign-tenant
 Authorization: Bearer {{owner_token}}
 Content-Type: application/json
 
 {
-  "userId": "698dc93abb72c6ab681bc0ce"
+  "userId": "698dc9dfeab8faf032a3314f",
+  "moveInDate": "2024-01-01T00:00:00.000Z",
+  "contractEndDate": "2025-01-01T00:00:00.000Z",
+  "emergencyContact": "Nguyễn Văn B - 0987654321"
 }
 
 ###

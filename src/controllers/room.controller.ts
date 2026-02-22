@@ -119,7 +119,11 @@ export const assignTenantController = async (req: Request, res: Response) => {
       });
     }
 
-    const room = await assignTenant(id, req.body.userId, currentUser.id);
+    const room = await assignTenant(id, req.body.userId, currentUser.id, {
+      moveInDate: req.body.moveInDate,
+      contractEndDate: req.body.contractEndDate,
+      emergencyContact: req.body.emergencyContact
+    });
 
     if (!room) {
       return res.status(404).json({

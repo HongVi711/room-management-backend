@@ -61,14 +61,4 @@ export class UpdateRoomDto {
 export class AssignTenantDto {
   @IsString()
   userId!: string;
-
-  @IsOptional()
-  @IsString()
-  emergencyContact?: string;
-
-  @IsOptional()
-  moveInDate?: Date;
-
-  @IsOptional()
-  contractEndDate?: Date;
 }

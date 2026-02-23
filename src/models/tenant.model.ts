@@ -5,7 +5,7 @@ export interface ITenant extends Document {
   userId: Types.ObjectId;
   roomId: Types.ObjectId;
   moveInDate: Date;
-  contractEndDate: Date;
+  contractEndDate?: Date | null;
   status: TenantStatus;
   emergencyContact?: string;
 }
@@ -15,7 +15,7 @@ const tenantSchema = new Schema<ITenant>(
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     roomId: { type: Schema.Types.ObjectId, ref: "Room", required: true },
     moveInDate: { type: Date, required: true },
-    contractEndDate: { type: Date, required: true },
+    contractEndDate: { type: Date, required: false },
     status: {
       type: String,
       enum: [ TenantStatus.ACTIVE, TenantStatus.INACTIVE],

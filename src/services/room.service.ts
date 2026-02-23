@@ -35,16 +35,7 @@ export const deleteRoom = async (roomId: string, ownerId: string): Promise<IRoom
   return deletedRoom;
 };
 
-export const assignTenant = async (
-  roomId: string, 
-  userId: string, 
-  ownerId: string,
-  contractData?: {
-    moveInDate?: Date;
-    contractEndDate?: Date;
-    emergencyContact?: string;
-  }
-): Promise<IRoom | null> => {
+export const assignTenant = async (roomId: string, userId: string, ownerId: string): Promise<IRoom | null> => {
   const room = await Room.findById(roomId);
   if (!room) return null;
 
@@ -59,9 +50,9 @@ export const assignTenant = async (
   await Tenant.create({
     userId: new Types.ObjectId(userId),
     roomId: new Types.ObjectId(roomId),
-    moveInDate: contractData?.moveInDate || new Date(),
-    contractEndDate: contractData?.contractEndDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // Default 1 year
-    emergencyContact: contractData?.emergencyContact || "",
+    moveInDate: new Date(), // Current date
+    contractEndDate: null, // To be updated later
+    emergencyContact: "", // To be updated later
     status: TenantStatus.ACTIVE
   });
 

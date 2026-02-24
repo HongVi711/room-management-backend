@@ -1,6 +1,7 @@
 import User, { IUser } from "../models/user.model";
+import Tenant from "../models/tenant.model";
 import bcrypt from "bcrypt";
-import { ROLE } from "../utils/app.constants";
+import { ROLE, TenantStatus } from "../utils/app.constants";
 
 interface CreateUserInput {
   email: string;
@@ -154,4 +155,57 @@ export const updateUser = async (userId: string, updateData: Partial<CreateUserI
   // Update user
   const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
   return updatedUser;
+};
+
+export const getNonTenantUsers = async (searchParams?: {
+  email?: string;
+  name?: string;
+  phone?: string;
+}, pagination?: {
+  page?: number;
+  limit?: number;
+}) => {
+  // Get all users that do not have any tenant record (not in tenant table at all)
+  const tenantUserIds = await Tenant.distinct('userId');
+
+  let query: any = {
+    _id: { $nin: tenantUserIds }, // Exclude users who have any tenant record
+  };
+
+  // Add search filters
+  if (searchParams?.email) {
+    query.email = { $regex: searchParams.email, $options: 'i' };
+  }
+
+  if (searchParams?.name) {
+    query.name = { $regex: searchParams.name, $options: 'i' };
+  }
+
+  if (searchParams?.phone) {
+    query.phone = { $regex: searchParams.phone, $options: 'i' };
+  }
+
+  const page = Math.max(1, pagination?.page || 1);
+  const limit = Math.min(100, Math.max(1, pagination?.limit || 10));
+  const skip = (page - 1) * limit;
+
+  const total = await User.countDocuments(query);
+  const totalPages = Math.ceil(total / limit);
+
+  const users = await User.find(query)
+    .select('-password')
+    .skip(skip)
+    .limit(limit);
+
+  return {
+    users,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1
+    }
+  };
 };

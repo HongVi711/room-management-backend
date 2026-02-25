@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.route";
 import userRoutes from "./routes/user.route";
 import buildingRoutes from "./routes/building.route";
 import roomRoutes from "./routes/room.route";
+import tenantRoutes from "./routes/tenant.route";
 
 const app = express();
 
@@ -21,5 +22,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/buildings", buildingRoutes);
 app.use("/api/rooms", roomRoutes);
+app.use("/api/tenants", tenantRoutes);
 
 export default app;

@@ -541,3 +541,86 @@ Authorization: Bearer {{owner_token}}
 # EXPECT: 200 OK
 # Response sẽ có room data đã xóa
 ###
+
+#######################################
+### 🔟 TEST GET ALL TENANTS API
+#######################################
+
+### Get all tenants (SUCCESS - OWNER)
+GET {{baseUrl}}/api/tenants
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có danh sách tất cả tenants với user và room info
+###
+
+### Get active tenants only (SUCCESS - OWNER)
+GET {{baseUrl}}/api/tenants?status=active
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có danh sách tenants đang ở (status = ACTIVE)
+###
+
+### Get inactive tenants only (SUCCESS - OWNER)
+GET {{baseUrl}}/api/tenants?status=inactive
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có danh sách tenants đã trả phòng (status = INACTIVE)
+###
+
+### Filter tenants by userId (SUCCESS - OWNER)
+GET {{baseUrl}}/api/tenants?userId=698dc93abb72c6ab681bc0ce
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có tenant records của user cụ thể
+###
+
+### Filter tenants by roomId (SUCCESS - OWNER)
+GET {{baseUrl}}/api/tenants?roomId=69981d9e46c8af57f060929c
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có tenant records của phòng cụ thể
+###
+
+### Get tenants with pagination (page 1, limit 5)
+GET {{baseUrl}}/api/tenants?page=1&limit=5
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có max 5 tenants và pagination info
+###
+
+### Get tenants with filters and pagination
+GET {{baseUrl}}/api/tenants?status=active&page=1&limit=3
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có max 3 active tenants và pagination info
+###
+
+### Get all tenants (TENANT - FORBIDDEN)
+GET {{baseUrl}}/api/tenants
+Authorization: Bearer {{tenant_token}}
+
+###
+# EXPECT: 403 Forbidden
+# Chỉ OWNER mới có thể xem danh sách tenants
+###
+
+### Get all tenants (WITHOUT AUTH - FAIL)
+GET {{baseUrl}}/api/tenants
+
+###
+# EXPECT: 401 Unauthorized
+###

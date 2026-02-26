@@ -1,4 +1,4 @@
-import "reflect-metadata"; 
+import "reflect-metadata";
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
@@ -7,6 +7,7 @@ import userRoutes from "./routes/user.route";
 import buildingRoutes from "./routes/building.route";
 import roomRoutes from "./routes/room.route";
 import tenantRoutes from "./routes/tenant.route";
+import paymentRoutes from "./routes/payment.route";
 
 const app = express();
 
@@ -23,5 +24,6 @@ app.use("/api/users", userRoutes);
 app.use("/api/buildings", buildingRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/tenants", tenantRoutes);
+app.use("/api/payments", paymentRoutes);
 
 export default app;

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { updateRoom, deleteRoom, assignTenant, getAllRooms } from "../services/room.service";
+import { updateRoom, deleteRoom, assignTenant, removeTenant, getAllRooms } from "../services/room.service";
 import { ROLE } from "../utils/app.constants";
 import { getBuildingById } from "../services/building.service";
 
@@ -129,6 +129,42 @@ export const assignTenantController = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       message: "Tenant assigned to room successfully",
+      data: room,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      message: error.message,
+    });
+  }
+};
+
+export const removeTenantController = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const currentUser = (req as any).user;
+
+    if (!id || typeof id !== "string") {
+      return res.status(400).json({
+        message: "Invalid room id",
+      });
+    }
+
+    if (currentUser.role === ROLE.TENANT) {
+      return res.status(403).json({
+        message: "Tenants cannot remove tenants from rooms",
+      });
+    }
+
+    const room = await removeTenant(id, currentUser.id);
+
+    if (!room) {
+      return res.status(404).json({
+        message: "Room not found or you don't own the building",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Tenant removed from room successfully",
       data: room,
     });
   } catch (error: any) {

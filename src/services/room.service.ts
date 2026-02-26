@@ -1,4 +1,5 @@
 import Room, { IRoom } from "../models/room.model";
+import Building from "../models/building.model";
 import { UpdateRoomDto } from "../dtos/room.dto";
 import { getBuildingById } from "./building.service";
 import { ROOMSTATUS, TenantStatus } from "../utils/app.constants";
@@ -32,6 +33,15 @@ export const deleteRoom = async (roomId: string, ownerId: string): Promise<IRoom
   if (!building || building.ownerId.toString() !== ownerId) return null;
 
   const deletedRoom = await Room.findByIdAndDelete(roomId);
+  
+  // Update building's totalRooms after successful room deletion
+  if (deletedRoom) {
+    await Building.findByIdAndUpdate(
+      building._id,
+      { $inc: { totalRooms: -1 } }
+    );
+  }
+  
   return deletedRoom;
 };
 

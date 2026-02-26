@@ -8,7 +8,7 @@ import Tenant from "../models/tenant.model";
 export const updateRoom = async (
   roomId: string,
   data: UpdateRoomDto,
-  ownerId: string
+  ownerId: string,
 ): Promise<IRoom | null> => {
   const room = await Room.findById(roomId);
   if (!room) return null;
@@ -20,7 +20,10 @@ export const updateRoom = async (
   return updatedRoom;
 };
 
-export const deleteRoom = async (roomId: string, ownerId: string): Promise<IRoom | null> => {
+export const deleteRoom = async (
+  roomId: string,
+  ownerId: string,
+): Promise<IRoom | null> => {
   const room = await Room.findById(roomId);
   if (!room) return null;
 
@@ -35,7 +38,11 @@ export const deleteRoom = async (roomId: string, ownerId: string): Promise<IRoom
   return deletedRoom;
 };
 
-export const assignTenant = async (roomId: string, userId: string, ownerId: string): Promise<IRoom | null> => {
+export const assignTenant = async (
+  roomId: string,
+  userId: string,
+  ownerId: string,
+): Promise<IRoom | null> => {
   const room = await Room.findById(roomId);
   if (!room) return null;
 
@@ -53,7 +60,7 @@ export const assignTenant = async (roomId: string, userId: string, ownerId: stri
     moveInDate: new Date(), // Current date
     contractEndDate: null, // To be updated later
     emergencyContact: "", // To be updated later
-    status: TenantStatus.ACTIVE
+    status: TenantStatus.ACTIVE,
   });
 
   // Assign user to room
@@ -74,13 +81,13 @@ export const getAllRooms = async (
   pagination?: {
     page?: number;
     limit?: number;
-  }
+  },
 ) => {
   let query: any = {};
 
   // Build search query
   if (searchParams?.number) {
-    query.number = { $regex: searchParams.number, $options: 'i' };
+    query.number = { $regex: searchParams.number, $options: "i" };
   }
 
   if (searchParams?.buildingId) {
@@ -106,8 +113,9 @@ export const getAllRooms = async (
 
   // Get paginated results
   const rooms = await Room.find(query)
-    .populate('buildingId', 'name')
-    .populate('currentTenant', 'name email')
+    .populate("buildingId", "name")
+    .populate("currentTenant", "name email")
+    .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
 
@@ -119,7 +127,7 @@ export const getAllRooms = async (
       total,
       totalPages,
       hasNext: page < totalPages,
-      hasPrev: page > 1
-    }
+      hasPrev: page > 1,
+    },
   };
 };

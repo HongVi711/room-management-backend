@@ -41,7 +41,7 @@ export const getAllTenants = async (params?: GetAllTenantsParams) => {
   const totalPages = Math.ceil(total / limit);
 
   const tenants = await Tenant.find(query)
-    .populate('userId', 'email name phone cccd')
+    .populate('userId', 'email name phone cccd cccdImages')
     .populate('roomId', 'roomNumber floor area price buildingId')
     .sort({ createdAt: -1 })
     .skip(skip)

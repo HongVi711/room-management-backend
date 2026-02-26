@@ -624,3 +624,51 @@ GET {{baseUrl}}/api/tenants
 ###
 # EXPECT: 401 Unauthorized
 ###
+
+#######################################
+### 1️⃣1️⃣ TEST REMOVE TENANT API
+#######################################
+
+### Remove tenant from room (SUCCESS - OWNER)
+POST {{baseUrl}}/api/rooms/69981d9e46c8af57f060929c/remove-tenant
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có room data với currentTenant = null và status = AVAILABLE
+# Tenant record sẽ được cập nhật status = INACTIVE và contractEndDate = ngày hiện tại
+###
+
+### Remove tenant from room that has no tenant (ERROR)
+POST {{baseUrl}}/api/rooms/69981d9e46c8af57f060929c/remove-tenant
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 400 Bad Request
+# Response: {"message": "Room has no tenant to remove"}
+###
+
+### Remove tenant from non-existent room (ERROR)
+POST {{baseUrl}}/api/rooms/507f1f77bcf86cd799439011/remove-tenant
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 404 Not Found
+# Response: {"message": "Room not found or you don't own the building"}
+###
+
+### Remove tenant from room (TENANT - FORBIDDEN)
+POST {{baseUrl}}/api/rooms/69981d9e46c8af57f060929c/remove-tenant
+Authorization: Bearer {{tenant_token}}
+
+###
+# EXPECT: 403 Forbidden
+# Response: {"message": "Tenants cannot remove tenants from rooms"}
+###
+
+### Remove tenant from room (WITHOUT AUTH - FAIL)
+POST {{baseUrl}}/api/rooms/69981d9e46c8af57f060929c/remove-tenant
+
+###
+# EXPECT: 401 Unauthorized
+###

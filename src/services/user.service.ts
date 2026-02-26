@@ -44,16 +44,15 @@ export const UserService = async (data: CreateUserInput) => {
     role: data.role ?? ROLE.TENANT,
     cccdImages: {
       front: {
-        url: cccdFront.path,       
-        publicId: cccdFront.filename
+        url: cccdFront.path,
+        publicId: cccdFront.filename,
       },
       back: {
         url: cccdBack.path,
-        publicId: cccdBack.filename
+        publicId: cccdBack.filename,
       },
     },
   });
-
 
   return newUser;
 };
@@ -66,37 +65,41 @@ export const getUserById = async (userId: string) => {
   return user;
 };
 
-export const getAllUsers = async (searchParams?: {
-  email?: string;
-  name?: string;
-  phone?: string;
-}, pagination?: {
-  page?: number;
-  limit?: number;
-}) => {
+export const getAllUsers = async (
+  searchParams?: {
+    email?: string;
+    name?: string;
+    phone?: string;
+  },
+  pagination?: {
+    page?: number;
+    limit?: number;
+  },
+) => {
   let query: any = {};
 
   if (searchParams?.email) {
-    query.email = { $regex: searchParams.email, $options: 'i' }; 
+    query.email = { $regex: searchParams.email, $options: "i" };
   }
 
   if (searchParams?.name) {
-    query.name = { $regex: searchParams.name, $options: 'i' };
+    query.name = { $regex: searchParams.name, $options: "i" };
   }
 
   if (searchParams?.phone) {
-    query.phone = { $regex: searchParams.phone, $options: 'i' };
+    query.phone = { $regex: searchParams.phone, $options: "i" };
   }
 
   const page = Math.max(1, pagination?.page || 1);
-  const limit = Math.min(100, Math.max(1, pagination?.limit || 10)); 
+  const limit = Math.min(100, Math.max(1, pagination?.limit || 10));
   const skip = (page - 1) * limit;
 
   const total = await User.countDocuments(query);
   const totalPages = Math.ceil(total / limit);
 
   const users = await User.find(query)
-    .select('-password')
+    .select("-password")
+    .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
 
@@ -108,8 +111,8 @@ export const getAllUsers = async (searchParams?: {
       total,
       totalPages,
       hasNext: page < totalPages,
-      hasPrev: page > 1
-    }
+      hasPrev: page > 1,
+    },
   };
 };
 
@@ -122,7 +125,10 @@ export const deleteUser = async (userId: string) => {
   return { message: "User đã được xóa" };
 };
 
-export const updateUser = async (userId: string, updateData: Partial<CreateUserInput>) => {
+export const updateUser = async (
+  userId: string,
+  updateData: Partial<CreateUserInput>,
+) => {
   const user = await User.findById(userId);
   if (!user) {
     throw new Error("User không tồn tại");
@@ -153,20 +159,25 @@ export const updateUser = async (userId: string, updateData: Partial<CreateUserI
   }
 
   // Update user
-  const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
+  const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+    new: true,
+  });
   return updatedUser;
 };
 
-export const getNonTenantUsers = async (searchParams?: {
-  email?: string;
-  name?: string;
-  phone?: string;
-}, pagination?: {
-  page?: number;
-  limit?: number;
-}) => {
+export const getNonTenantUsers = async (
+  searchParams?: {
+    email?: string;
+    name?: string;
+    phone?: string;
+  },
+  pagination?: {
+    page?: number;
+    limit?: number;
+  },
+) => {
   // Get all users that do not have any tenant record (not in tenant table at all)
-  const tenantUserIds = await Tenant.distinct('userId');
+  const tenantUserIds = await Tenant.distinct("userId");
 
   let query: any = {
     _id: { $nin: tenantUserIds }, // Exclude users who have any tenant record
@@ -174,15 +185,15 @@ export const getNonTenantUsers = async (searchParams?: {
 
   // Add search filters
   if (searchParams?.email) {
-    query.email = { $regex: searchParams.email, $options: 'i' };
+    query.email = { $regex: searchParams.email, $options: "i" };
   }
 
   if (searchParams?.name) {
-    query.name = { $regex: searchParams.name, $options: 'i' };
+    query.name = { $regex: searchParams.name, $options: "i" };
   }
 
   if (searchParams?.phone) {
-    query.phone = { $regex: searchParams.phone, $options: 'i' };
+    query.phone = { $regex: searchParams.phone, $options: "i" };
   }
 
   const page = Math.max(1, pagination?.page || 1);
@@ -193,7 +204,7 @@ export const getNonTenantUsers = async (searchParams?: {
   const totalPages = Math.ceil(total / limit);
 
   const users = await User.find(query)
-    .select('-password')
+    .select("-password")
     .skip(skip)
     .limit(limit);
 
@@ -205,7 +216,7 @@ export const getNonTenantUsers = async (searchParams?: {
       total,
       totalPages,
       hasNext: page < totalPages,
-      hasPrev: page > 1
-    }
+      hasPrev: page > 1,
+    },
   };
 };

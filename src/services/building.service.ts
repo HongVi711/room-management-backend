@@ -20,7 +20,7 @@ export const createBuilding = async (
       floor: Math.ceil(i / 10), // Default: 10 rooms per floor
       area: 25, // Default area
       price: 3000000, // Default price
-      status: 'available',
+      status: "available",
       description: `Room ${i} in ${data.name}`,
     });
   }
@@ -82,7 +82,7 @@ export const getAllBuildings = async (
 
   const [total, buildings] = await Promise.all([
     Building.countDocuments(query),
-    Building.find(query).skip(skip).limit(limit).lean(),
+    Building.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
   ]);
 
   const totalPages = Math.ceil(total / limit);

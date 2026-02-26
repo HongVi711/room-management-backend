@@ -9,7 +9,7 @@ import Tenant from "../models/tenant.model";
 export const updateRoom = async (
   roomId: string,
   data: UpdateRoomDto,
-  ownerId: string
+  ownerId: string,
 ): Promise<IRoom | null> => {
   const room = await Room.findById(roomId);
   if (!room) return null;
@@ -21,7 +21,10 @@ export const updateRoom = async (
   return updatedRoom;
 };
 
-export const deleteRoom = async (roomId: string, ownerId: string): Promise<IRoom | null> => {
+export const deleteRoom = async (
+  roomId: string,
+  ownerId: string,
+): Promise<IRoom | null> => {
   const room = await Room.findById(roomId);
   if (!room) return null;
 
@@ -33,18 +36,21 @@ export const deleteRoom = async (roomId: string, ownerId: string): Promise<IRoom
   if (!building || building.ownerId.toString() !== ownerId) return null;
 
   const deletedRoom = await Room.findByIdAndDelete(roomId);
-  
+
   if (deletedRoom) {
-    await Building.findByIdAndUpdate(
-      building._id,
-      { $inc: { totalRooms: -1 } }
-    );
+    await Building.findByIdAndUpdate(building._id, {
+      $inc: { totalRooms: -1 },
+    });
   }
-  
+
   return deletedRoom;
 };
 
-export const assignTenant = async (roomId: string, userId: string, ownerId: string): Promise<IRoom | null> => {
+export const assignTenant = async (
+  roomId: string,
+  userId: string,
+  ownerId: string,
+): Promise<IRoom | null> => {
   const room = await Room.findById(roomId);
   if (!room) return null;
 
@@ -59,9 +65,9 @@ export const assignTenant = async (roomId: string, userId: string, ownerId: stri
     userId: new Types.ObjectId(userId),
     roomId: new Types.ObjectId(roomId),
     moveInDate: new Date(),
-    contractEndDate: null, 
-    emergencyContact: "", 
-    status: TenantStatus.ACTIVE
+    contractEndDate: null,
+    emergencyContact: "",
+    status: TenantStatus.ACTIVE,
   });
 
   room.currentTenant = new Types.ObjectId(userId);
@@ -71,7 +77,10 @@ export const assignTenant = async (roomId: string, userId: string, ownerId: stri
   return room;
 };
 
-export const removeTenant = async (roomId: string, ownerId: string): Promise<IRoom | null> => {
+export const removeTenant = async (
+  roomId: string,
+  ownerId: string,
+): Promise<IRoom | null> => {
   const room = await Room.findById(roomId);
   if (!room) return null;
 
@@ -83,18 +92,18 @@ export const removeTenant = async (roomId: string, ownerId: string): Promise<IRo
   }
 
   await Tenant.findOneAndUpdate(
-    { 
+    {
       roomId: new Types.ObjectId(roomId),
       userId: room.currentTenant,
-      status: TenantStatus.ACTIVE 
+      status: TenantStatus.ACTIVE,
     },
-    { 
+    {
       status: TenantStatus.INACTIVE,
-      contractEndDate: new Date() 
-    }
+      contractEndDate: new Date(),
+    },
   );
 
-  room.set('currentTenant', undefined);
+  room.set("currentTenant", undefined);
   room.status = ROOMSTATUS.AVAILABLE;
   await room.save();
 
@@ -111,12 +120,12 @@ export const getAllRooms = async (
   pagination?: {
     page?: number;
     limit?: number;
-  }
+  },
 ) => {
   let query: any = {};
 
   if (searchParams?.number) {
-    query.number = { $regex: searchParams.number, $options: 'i' };
+    query.number = { $regex: searchParams.number, $options: "i" };
   }
 
   if (searchParams?.buildingId) {
@@ -139,8 +148,9 @@ export const getAllRooms = async (
   const totalPages = Math.ceil(total / limit);
 
   const rooms = await Room.find(query)
-    .populate('buildingId', 'name')
-    .populate('currentTenant', 'name email')
+    .populate("buildingId", "name")
+    .populate("currentTenant", "name email")
+    .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
 
@@ -152,7 +162,7 @@ export const getAllRooms = async (
       total,
       totalPages,
       hasNext: page < totalPages,
-      hasPrev: page > 1
-    }
+      hasPrev: page > 1,
+    },
   };
 };

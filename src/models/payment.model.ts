@@ -49,19 +49,19 @@ const paymentSchema = new Schema<IPayment>(
     electricityUnitPrice: { type: Number, required: true },
     electricityPrevious: { type: Number, required: true },
     electricityCurrent: { type: Number, required: true },
-    electricityAmount: { type: Number, required: true },
+    electricityAmount: { type: Number, required: false }, // Auto-calculated
 
     waterUnitPrice: { type: Number, required: true },
     waterPrevious: { type: Number, required: true },
     waterCurrent: { type: Number, required: true },
-    waterAmount: { type: Number, required: true },
+    waterAmount: { type: Number, required: false }, // Auto-calculated
 
     internetFee: { type: Number, default: 0 },
     parkingFee: { type: Number, default: 0 },
     serviceFee: { type: Number, default: 0 },
     otherFee: { type: Number, default: 0 },
 
-    amount: { type: Number, required: true },
+    amount: { type: Number, required: false }, // Auto-calculated
 
     dueDate: { type: String, required: true },
     paidDate: { type: String },

@@ -1,27 +1,35 @@
-import { Response } from "express";
-import paymentModel, { PaymentStatus } from "../models/payment.model";
+import { Request, Response } from "express";
+import { createPayment, getPayments, getPaymentById, updatePayment, markAsPaid, deletePayment } from "../services/payment.service";
 import { ROLE } from "../utils/app.constants";
+
+interface AuthenticatedRequest extends Request {
+  user: {
+    id: string;
+    role: number;
+    email: string;
+  };
+}
 
 // ===============================
 // CREATE PAYMENT (OWNER)
 // ===============================
-export const createPayment = async (req: any, res: Response) => {
+export const createPaymentController = async (req: Request, res: Response) => {
   try {
-    if (req.user.role === ROLE.TENANT) {
+    if ((req as any).user.role === ROLE.TENANT) {
       return res.status(403).json({
         message: "Tenants cannot create payments",
       });
     }
 
-    const payment = await paymentModel.create(req.body);
+    const payment = await createPayment(req.body);
 
     return res.status(201).json({
       message: "Payment created successfully",
       data: payment,
     });
-  } catch (error) {
+  } catch (error: any) {
     return res.status(400).json({
-      message: "Failed to create payment",
+      message: error.message || "Failed to create payment",
     });
   }
 };
@@ -31,32 +39,24 @@ export const createPayment = async (req: any, res: Response) => {
 // OWNER → all
 // TENANT → only theirs
 // ===============================
-export const getPayments = async (req: any, res: Response) => {
+export const getPaymentsController = async (req: Request, res: Response) => {
   try {
-    const { status, month } = req.query;
+    const { status, month, tenantId } = req.query;
 
-    const query: {
-      tenantId?: string;
-      status?: PaymentStatus;
-      month?: string;
-    } = {};
+    const params: any = {};
+    if (status) params.status = status;
+    if (month) params.month = month;
+    if (tenantId) params.tenantId = tenantId;
 
-    if (req.user.role === ROLE.TENANT) {
-      query.tenantId = req.user.id;
-    }
-
-    if (status) query.status = status as PaymentStatus;
-    if (month) query.month = month as string;
-
-    const payments = await paymentModel.find(query).sort({ createdAt: -1 });
+    const result = await getPayments(params, (req as any).user.role, (req as any).user.id);
 
     return res.status(200).json({
-      count: payments.length,
-      data: payments,
+      count: result.count,
+      data: result.payments,
     });
-  } catch {
+  } catch (error: any) {
     return res.status(500).json({
-      message: "Failed to fetch payments",
+      message: error.message || "Failed to fetch payments",
     });
   }
 };
@@ -64,35 +64,22 @@ export const getPayments = async (req: any, res: Response) => {
 // ===============================
 // GET PAYMENT DETAIL
 // ===============================
-export const getPaymentById = async (req: any, res: Response) => {
+export const getPaymentByIdController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    if (!id) {
+    if (!id || typeof id !== "string") {
       return res.status(400).json({
         message: "Invalid payment id",
       });
     }
 
-    const payment = await paymentModel.findById(id);
-
-    if (!payment) {
-      return res.status(404).json({
-        message: "Payment not found",
-      });
-    }
-
-    // tenant chỉ xem hóa đơn của mình
-    if (req.user.role === ROLE.TENANT && payment.tenantId !== req.user.id) {
-      return res.status(403).json({
-        message: "Access denied",
-      });
-    }
+    const payment = await getPaymentById(id, (req as any).user.role, (req as any).user.id);
 
     return res.status(200).json(payment);
-  } catch {
-    return res.status(500).json({
-      message: "Failed to fetch payment",
+  } catch (error: any) {
+    return res.status(error.message === "Payment not found" ? 404 : 500).json({
+      message: error.message || "Failed to fetch payment",
     });
   }
 };
@@ -100,9 +87,9 @@ export const getPaymentById = async (req: any, res: Response) => {
 // ===============================
 // UPDATE PAYMENT (OWNER)
 // ===============================
-export const updatePayment = async (req: any, res: Response) => {
+export const updatePaymentController = async (req: Request, res: Response) => {
   try {
-    if (req.user.role === ROLE.TENANT) {
+    if ((req as any).user.role === ROLE.TENANT) {
       return res.status(403).json({
         message: "Tenants cannot update payments",
       });
@@ -110,24 +97,21 @@ export const updatePayment = async (req: any, res: Response) => {
 
     const { id } = req.params;
 
-    const payment = await paymentModel.findByIdAndUpdate(id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-
-    if (!payment) {
-      return res.status(404).json({
-        message: "Payment not found",
+    if (!id || typeof id !== "string") {
+      return res.status(400).json({
+        message: "Invalid payment id",
       });
     }
+
+    const payment = await updatePayment(id, req.body);
 
     return res.status(200).json({
       message: "Payment updated successfully",
       data: payment,
     });
-  } catch {
-    return res.status(400).json({
-      message: "Update failed",
+  } catch (error: any) {
+    return res.status(error.message === "Payment not found" ? 404 : 400).json({
+      message: error.message || "Update failed",
     });
   }
 };
@@ -135,37 +119,25 @@ export const updatePayment = async (req: any, res: Response) => {
 // ===============================
 // TENANT PAY BILL
 // ===============================
-export const markAsPaid = async (req: any, res: Response) => {
+export const markAsPaidController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    const payment = await paymentModel.findById(id);
-
-    if (!payment) {
-      return res.status(404).json({
-        message: "Payment not found",
+    if (!id || typeof id !== "string") {
+      return res.status(400).json({
+        message: "Invalid payment id",
       });
     }
 
-    // tenant chỉ trả hóa đơn của mình
-    if (req.user.role === ROLE.TENANT && payment.tenantId !== req.user.id) {
-      return res.status(403).json({
-        message: "Access denied",
-      });
-    }
-
-    payment.status = PaymentStatus.PAID;
-    payment.paidDate = new Date().toISOString();
-
-    await payment.save();
+    const payment = await markAsPaid(id, (req as any).user.role, (req as any).user.id);
 
     return res.status(200).json({
       message: "Payment successful",
       data: payment,
     });
-  } catch {
-    return res.status(500).json({
-      message: "Payment failed",
+  } catch (error: any) {
+    return res.status(error.message === "Payment not found" ? 404 : 500).json({
+      message: error.message || "Payment failed",
     });
   }
 };
@@ -173,9 +145,9 @@ export const markAsPaid = async (req: any, res: Response) => {
 // ===============================
 // DELETE PAYMENT (OWNER)
 // ===============================
-export const deletePayment = async (req: any, res: Response) => {
+export const deletePaymentController = async (req: Request, res: Response) => {
   try {
-    if (req.user.role === ROLE.TENANT) {
+    if ((req as any).user.role === ROLE.TENANT) {
       return res.status(403).json({
         message: "Tenants cannot delete payments",
       });
@@ -183,20 +155,20 @@ export const deletePayment = async (req: any, res: Response) => {
 
     const { id } = req.params;
 
-    const payment = await paymentModel.findByIdAndDelete(id);
-
-    if (!payment) {
-      return res.status(404).json({
-        message: "Payment not found",
+    if (!id || typeof id !== "string") {
+      return res.status(400).json({
+        message: "Invalid payment id",
       });
     }
+
+    await deletePayment(id);
 
     return res.status(200).json({
       message: "Payment deleted successfully",
     });
-  } catch {
-    return res.status(500).json({
-      message: "Delete failed",
+  } catch (error: any) {
+    return res.status(error.message === "Payment not found" ? 404 : 500).json({
+      message: error.message || "Delete failed",
     });
   }
 };

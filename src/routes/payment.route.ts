@@ -1,11 +1,11 @@
 import { Router } from "express";
 import {
-  createPayment,
-  deletePayment,
-  getPaymentById,
-  getPayments,
-  markAsPaid,
-  updatePayment,
+  createPaymentController,
+  deletePaymentController,
+  getPaymentByIdController,
+  getPaymentsController,
+  markAsPaidController,
+  updatePaymentController,
 } from "../controllers/payment.controller";
 
 import { authMiddleware } from "../middlewares/auth.middleware";
@@ -22,13 +22,13 @@ router.get(
   "/",
   authMiddleware,
   requireRole([ROLE.OWNER, ROLE.TENANT]),
-  getPayments,
+  getPaymentsController,
 );
 
 /**
  * OWNER tạo hóa đơn
  */
-router.post("/", authMiddleware, requireRole([ROLE.OWNER]), createPayment);
+router.post("/", authMiddleware, requireRole([ROLE.OWNER]), createPaymentController);
 
 /**
  * Xem chi tiết hóa đơn
@@ -38,13 +38,13 @@ router.get(
   "/:id",
   authMiddleware,
   requireRole([ROLE.OWNER, ROLE.TENANT]),
-  getPaymentById,
+  getPaymentByIdController,
 );
 
 /**
  * OWNER cập nhật hóa đơn
  */
-router.put("/:id", authMiddleware, requireRole([ROLE.OWNER]), updatePayment);
+router.put("/:id", authMiddleware, requireRole([ROLE.OWNER]), updatePaymentController);
 
 /**
  * TENANT thanh toán hóa đơn
@@ -53,12 +53,12 @@ router.patch(
   "/:id/pay",
   authMiddleware,
   requireRole([ROLE.TENANT]),
-  markAsPaid,
+  markAsPaidController,
 );
 
 /**
  * OWNER xóa hóa đơn
  */
-router.delete("/:id", authMiddleware, requireRole([ROLE.OWNER]), deletePayment);
+router.delete("/:id", authMiddleware, requireRole([ROLE.OWNER]), deletePaymentController);
 
 export default router;

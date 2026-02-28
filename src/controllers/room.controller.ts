@@ -1,5 +1,12 @@
 import { Request, Response } from "express";
-import { updateRoom, deleteRoom, assignTenant, removeTenant, getAllRooms } from "../services/room.service";
+import {
+  updateRoom,
+  deleteRoom,
+  assignTenant,
+  removeTenant,
+  getAllRooms,
+  getRoomById,
+} from "../services/room.service";
 import { ROLE } from "../utils/app.constants";
 import { getBuildingById } from "../services/building.service";
 
@@ -166,6 +173,28 @@ export const removeTenantController = async (req: Request, res: Response) => {
     return res.status(200).json({
       message: "Tenant removed from room successfully",
       data: room,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      message: error.message,
+    });
+  }
+};
+
+export const getRoomByIdController = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const room = await getRoomById(id as string);
+
+    if (!room) {
+      return res.status(404).json({
+        message: "Room not found",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Room retrieved successfully",
+      room: room,
     });
   } catch (error: any) {
     return res.status(400).json({

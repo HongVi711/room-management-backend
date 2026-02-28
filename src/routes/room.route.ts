@@ -6,6 +6,7 @@ import {
   removeTenantController,
   getAllRoomsController,
   getRoomByIdController,
+  getOccupiedRoomsController,
 } from "../controllers/room.controller";
 import { validateDto } from "../middlewares/validate.middleware";
 import { UpdateRoomDto, AssignTenantDto } from "../dtos/room.dto";
@@ -50,6 +51,13 @@ router.post(
   authMiddleware,
   requireRole([ROLE.OWNER]),
   removeTenantController,
+);
+
+router.get(
+  "/occupied",
+  authMiddleware,
+  requireRole([ROLE.OWNER]),
+  getOccupiedRoomsController,
 );
 
 router.get(

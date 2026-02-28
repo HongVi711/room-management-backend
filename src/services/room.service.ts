@@ -173,3 +173,52 @@ export const getRoomById = async (roomId: string): Promise<IRoom | null> => {
     .populate("currentTenant", "name email");
   return room;
 };
+
+export const getOccupiedRooms = async (searchParams?: {
+  buildingId?: string;
+  floor?: number;
+}, pagination?: {
+  page?: number;
+  limit?: number;
+}) => {
+  let query: any = {
+    currentTenant: { $exists: true, $ne: null }, // Only rooms with current tenant
+    status: ROOMSTATUS.OCCUPIED
+  };
+
+  // Filter by buildingId
+  if (searchParams?.buildingId) {
+    query.buildingId = new Types.ObjectId(searchParams.buildingId);
+  }
+
+  // Filter by floor
+  if (searchParams?.floor !== undefined) {
+    query.floor = searchParams.floor;
+  }
+
+  const page = Math.max(1, pagination?.page || 1);
+  const limit = Math.min(100, Math.max(1, pagination?.limit || 10));
+  const skip = (page - 1) * limit;
+
+  const total = await Room.countDocuments(query);
+  const totalPages = Math.ceil(total / limit);
+
+  const rooms = await Room.find(query)
+    .populate('buildingId', 'name')
+    .populate('currentTenant', 'name email')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  return {
+    rooms,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1
+    }
+  };
+};

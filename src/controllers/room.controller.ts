@@ -6,6 +6,7 @@ import {
   removeTenant,
   getAllRooms,
   getRoomById,
+  getOccupiedRooms
 } from "../services/room.service";
 import { ROLE } from "../utils/app.constants";
 import { getBuildingById } from "../services/building.service";
@@ -196,6 +197,31 @@ export const getRoomByIdController = async (req: Request, res: Response) => {
       message: "Room retrieved successfully",
       room: room,
     });
+  } catch (error: any) {
+    return res.status(400).json({
+      message: error.message,
+    });
+  }
+};
+
+export const getOccupiedRoomsController = async (req: Request, res: Response) => {
+  try {
+    const currentUser = (req as any).user;
+    const { buildingId, floor, page, limit } = req.query;
+
+    // Build search params
+    const searchParams: any = {};
+    if (buildingId) searchParams.buildingId = buildingId as string;
+    if (floor) searchParams.floor = parseInt(floor as string);
+
+    // Build pagination
+    const pagination: any = {};
+    if (page) pagination.page = parseInt(page as string);
+    if (limit) pagination.limit = parseInt(limit as string);
+
+    const result = await getOccupiedRooms(searchParams, pagination);
+
+    return res.status(200).json(result);
   } catch (error: any) {
     return res.status(400).json({
       message: error.message,

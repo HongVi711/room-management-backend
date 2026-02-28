@@ -1,5 +1,12 @@
 import { Router } from "express";
-import { updateRoomController, deleteRoomController, assignTenantController, removeTenantController, getAllRoomsController } from "../controllers/room.controller";
+import {
+  updateRoomController,
+  deleteRoomController,
+  assignTenantController,
+  removeTenantController,
+  getAllRoomsController,
+  getRoomByIdController,
+} from "../controllers/room.controller";
 import { validateDto } from "../middlewares/validate.middleware";
 import { UpdateRoomDto, AssignTenantDto } from "../dtos/room.dto";
 import { authMiddleware } from "../middlewares/auth.middleware";
@@ -43,6 +50,13 @@ router.post(
   authMiddleware,
   requireRole([ROLE.OWNER]),
   removeTenantController,
+);
+
+router.get(
+  "/:id",
+  authMiddleware,
+  requireRole([ROLE.OWNER, ROLE.TENANT]),
+  getRoomByIdController,
 );
 
 export default router;

@@ -166,3 +166,10 @@ export const getAllRooms = async (
     },
   };
 };
+
+export const getRoomById = async (roomId: string): Promise<IRoom | null> => {
+  const room = await Room.findById(roomId)
+    .populate("buildingId", "name")
+    .populate("currentTenant", "name email");
+  return room;
+};

@@ -672,3 +672,197 @@ POST {{baseUrl}}/api/rooms/69981d9e46c8af57f060929c/remove-tenant
 ###
 # EXPECT: 401 Unauthorized
 ###
+
+#######################################
+### 1️⃣2️⃣ TEST PAYMENT API
+#######################################
+
+### Create payment (SUCCESS - OWNER)
+POST {{baseUrl}}/api/payments
+Authorization: Bearer {{owner_token}}
+Content-Type: application/json
+
+{
+  "tenantId": "698dc93abb72c6ab681bc0ce",
+  "roomId": "69981d9e46c8af57f060929c",
+  "month": "2024-02",
+  "roomFee": 2500000,
+  "electricityUnitPrice": 3000,
+  "electricityPrevious": 1000,
+  "electricityCurrent": 1050,
+  "electricityAmount": 150000,
+  "waterUnitPrice": 15000,
+  "waterPrevious": 50,
+  "waterCurrent": 55,
+  "waterAmount": 75000,
+  "internetFee": 200000,
+  "parkingFee": 150000,
+  "serviceFee": 100000,
+  "amount": 3175000,
+  "dueDate": "2024-02-28",
+  "notes": "Tiền phòng tháng 2/2024"
+}
+
+###
+# EXPECT: 201 Created
+# Response sẽ có payment data mới
+###
+
+### Get all payments (SUCCESS - OWNER)
+GET {{baseUrl}}/api/payments
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có tất cả payments của hệ thống
+###
+
+### Get all payments (SUCCESS - TENANT)
+GET {{baseUrl}}/api/payments
+Authorization: Bearer {{tenant_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có chỉ payments của tenant đó
+###
+
+### Get payments with filters (SUCCESS - OWNER)
+GET {{baseUrl}}/api/payments?status=PENDING&month=2024-02
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có payments theo status và tháng
+###
+
+### Get payment by ID (SUCCESS - OWNER)
+GET {{baseUrl}}/api/payments/{payment_id}
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có chi tiết payment
+###
+
+### Get payment by ID (SUCCESS - TENANT - OWN PAYMENT)
+GET {{baseUrl}}/api/payments/{payment_id}
+Authorization: Bearer {{tenant_token}}
+
+###
+# EXPECT: 200 OK
+# Tenant có thể xem payment của mình
+###
+
+### Get payment by ID (TENANT - NOT OWN PAYMENT - FORBIDDEN)
+GET {{baseUrl}}/api/payments/{payment_id_of_other_tenant}
+Authorization: Bearer {{tenant_token}}
+
+###
+# EXPECT: 403 Forbidden
+# Tenant không thể xem payment của người khác
+###
+
+### Update payment (SUCCESS - OWNER)
+PUT {{baseUrl}}/api/payments/{payment_id}
+Authorization: Bearer {{owner_token}}
+Content-Type: application/json
+
+{
+  "roomFee": 2600000,
+  "electricityUnitPrice": 3200,
+  "internetFee": 250000,
+  "notes": "Tiền phòng tháng 2/2024 (cập nhật)"
+}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có payment data đã cập nhật
+###
+
+### Update payment (TENANT - FORBIDDEN)
+PUT {{baseUrl}}/api/payments/{payment_id}
+Authorization: Bearer {{tenant_token}}
+Content-Type: application/json
+
+{
+  "roomFee": 2600000,
+  "electricityUnitPrice": 3200
+}
+
+###
+# EXPECT: 403 Forbidden
+# Tenant không thể cập nhật payment
+###
+
+### Mark payment as paid (SUCCESS - TENANT)
+PATCH {{baseUrl}}/api/payments/{payment_id}/pay
+Authorization: Bearer {{tenant_token}}
+
+###
+# EXPECT: 200 OK
+# Response sẽ có payment với status = PAID và paidDate
+###
+
+### Mark payment as paid (TENANT - NOT OWN PAYMENT - FORBIDDEN)
+PATCH {{baseUrl}}/api/payments/{payment_id_of_other_tenant}/pay
+Authorization: Bearer {{tenant_token}}
+
+###
+# EXPECT: 403 Forbidden
+# Tenant không thể trả payment của người khác
+###
+
+### Delete payment (SUCCESS - OWNER)
+DELETE {{baseUrl}}/api/payments/{payment_id}
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response: {"message": "Payment deleted successfully"}
+###
+
+### Delete payment (TENANT - FORBIDDEN)
+DELETE {{baseUrl}}/api/payments/{payment_id}
+Authorization: Bearer {{tenant_token}}
+
+###
+# EXPECT: 403 Forbidden
+# Tenant không thể xóa payment
+###
+
+### Create payment (TENANT - FORBIDDEN)
+POST {{baseUrl}}/api/payments
+Authorization: Bearer {{tenant_token}}
+Content-Type: application/json
+
+{
+  "tenantId": "698dc93abb72c6ab681bc0ce",
+  "roomId": "69981d9e46c8af57f060929c",
+  "month": "2024-02",
+  "roomFee": 2500000,
+  "electricityUnitPrice": 3000,
+  "electricityPrevious": 1000,
+  "electricityCurrent": 1050,
+  "electricityAmount": 150000,
+  "waterUnitPrice": 15000,
+  "waterPrevious": 50,
+  "waterCurrent": 55,
+  "waterAmount": 75000,
+  "internetFee": 200000,
+  "parkingFee": 150000,
+  "serviceFee": 100000,
+  "amount": 3175000,
+  "dueDate": "2024-02-28"
+}
+
+###
+# EXPECT: 403 Forbidden
+# Tenant không thể tạo payment
+###
+
+### Get payments (WITHOUT AUTH - FAIL)
+GET {{baseUrl}}/api/payments
+
+###
+# EXPECT: 401 Unauthorized
+###

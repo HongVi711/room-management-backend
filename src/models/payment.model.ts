@@ -49,19 +49,19 @@ const paymentSchema = new Schema<IPayment>(
     electricityUnitPrice: { type: Number, required: true },
     electricityPrevious: { type: Number, required: true },
     electricityCurrent: { type: Number, required: true },
-    electricityAmount: { type: Number, required: false }, // Auto-calculated
+    electricityAmount: { type: Number, required: true }, // Provided by frontend
 
     waterUnitPrice: { type: Number, required: true },
     waterPrevious: { type: Number, required: true },
     waterCurrent: { type: Number, required: true },
-    waterAmount: { type: Number, required: false }, // Auto-calculated
+    waterAmount: { type: Number, required: true }, // Provided by frontend
 
     internetFee: { type: Number, default: 0 },
     parkingFee: { type: Number, default: 0 },
     serviceFee: { type: Number, default: 0 },
     otherFee: { type: Number, default: 0 },
 
-    amount: { type: Number, required: false }, // Auto-calculated
+    amount: { type: Number, required: true }, // Provided by frontend
 
     dueDate: { type: String, required: true },
     paidDate: { type: String },
@@ -78,27 +78,5 @@ const paymentSchema = new Schema<IPayment>(
     timestamps: true,
   },
 );
-
-paymentSchema.pre("save", async function (this: IPayment) {
-  if (this.electricityCurrent < this.electricityPrevious) {
-    throw new Error("Electricity current must be >= previous");
-  }
-
-  this.electricityAmount =
-    (this.electricityCurrent - this.electricityPrevious) *
-    this.electricityUnitPrice;
-
-  this.waterAmount =
-    (this.waterCurrent - this.waterPrevious) * this.waterUnitPrice;
-
-  this.amount =
-    this.roomFee +
-    this.electricityAmount +
-    this.waterAmount +
-    (this.internetFee ?? 0) +
-    (this.parkingFee ?? 0) +
-    (this.serviceFee ?? 0) +
-    (this.otherFee ?? 0);
-});
 
 export default model<IPayment>("Payment", paymentSchema);

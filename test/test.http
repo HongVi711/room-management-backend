@@ -690,12 +690,15 @@ Content-Type: application/json
   "electricityUnitPrice": 3000,
   "electricityPrevious": 1000,
   "electricityCurrent": 1050,
+  "electricityAmount": 150000,
   "waterUnitPrice": 15000,
   "waterPrevious": 50,
   "waterCurrent": 55,
+  "waterAmount": 75000,
   "internetFee": 200000,
   "parkingFee": 150000,
   "serviceFee": 100000,
+  "amount": 3175000,
   "dueDate": "2024-02-28",
   "notes": "Tiền phòng tháng 2/2024"
 }
@@ -840,12 +843,15 @@ Content-Type: application/json
   "electricityUnitPrice": 3000,
   "electricityPrevious": 1000,
   "electricityCurrent": 1050,
+  "electricityAmount": 150000,
   "waterUnitPrice": 15000,
   "waterPrevious": 50,
   "waterCurrent": 55,
+  "waterAmount": 75000,
   "internetFee": 200000,
   "parkingFee": 150000,
   "serviceFee": 100000,
+  "amount": 3175000,
   "dueDate": "2024-02-28"
 }
 

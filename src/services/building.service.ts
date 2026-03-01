@@ -169,6 +169,12 @@ export const updateBuilding = async (
   data: UpdateBuildingDto,
   ownerId: string,
 ): Promise<IBuilding | null> => {
+  // Get current building to compare
+  const currentBuilding = await Building.findOne({ _id: buildingId, ownerId: ownerId });
+  if (!currentBuilding) {
+    return null;
+  }
+
   // Check if building has any occupied rooms
   const occupiedRoomsCount = await roomModel.countDocuments({
     buildingId: buildingId,
@@ -179,12 +185,49 @@ export const updateBuilding = async (
     throw new Error("Cannot update building with occupied rooms");
   }
 
-  const building = await Building.findOneAndUpdate(
+  // Update the building
+  const updatedBuilding = await Building.findOneAndUpdate(
     { _id: buildingId, ownerId: ownerId },
     data,
     { new: true },
   );
-  return building;
+
+  if (!updatedBuilding) {
+    return null;
+  }
+
+  // If totalRooms changed, regenerate rooms
+  if (data.totalRooms && data.totalRooms !== currentBuilding.totalRooms) {
+    // Delete all existing rooms
+    await roomModel.deleteMany({ buildingId: buildingId });
+
+    // Create new rooms
+    const rooms = [];
+    const roomsPerFloor = Math.ceil(data.totalRooms / (data.totalFloors || updatedBuilding.totalFloors || 1));
+    for (let i = 1; i <= data.totalRooms; i++) {
+      const floor = Math.ceil(i / roomsPerFloor);
+      rooms.push({
+        number: `${updatedBuilding.name}_room${i}`,
+        buildingId: buildingId,
+        floor: floor,
+        area: updatedBuilding.area || currentBuilding.area,
+        price: updatedBuilding.defaultRoomPrice || currentBuilding.defaultRoomPrice,
+        electricityUnitPrice: updatedBuilding.defaultElectricityUnitPrice || currentBuilding.defaultElectricityUnitPrice,
+        waterUnitPrice: updatedBuilding.defaultWaterUnitPrice || currentBuilding.defaultWaterUnitPrice,
+        internetFee: updatedBuilding.defaultInternetFee || currentBuilding.defaultInternetFee,
+        parkingFee: updatedBuilding.defaultParkingFee || currentBuilding.defaultParkingFee,
+        serviceFee: updatedBuilding.defaultServiceFee || currentBuilding.defaultServiceFee,
+        status: "available",
+        description: `Room ${i} in ${updatedBuilding.name}`,
+      });
+    }
+
+    if (rooms.length > 0) {
+      await roomModel.insertMany(rooms);
+    }
+  }
+
+  return updatedBuilding;
 };
 
 export const deleteBuilding = async (

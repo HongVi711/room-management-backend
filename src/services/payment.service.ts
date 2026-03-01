@@ -9,12 +9,9 @@ interface CreatePaymentInput {
   month: string;
   electricityPrevious: number;
   electricityCurrent: number;
-  electricityAmount: number;
   waterPrevious: number;
   waterCurrent: number;
-  waterAmount: number;
   otherFee?: number;
-  amount: number;
   dueDate: Date;
   status: string;
   notes?: string;
@@ -29,19 +26,37 @@ interface GetPaymentsParams {
 }
 
 export const createPayment = async (data: CreatePaymentInput) => {
-  // Không cần lấy Room để tính giá, frontend đã cung cấp đầy đủ
+  // Fetch room details for pricing
+  const room = await Room.findById(data.roomId);
+  if (!room) {
+    throw new Error("Room not found");
+  }
+
+  // Calculate electricity and water amounts
+  const electricityUsage = data.electricityCurrent - data.electricityPrevious;
+  const electricityAmount = electricityUsage * room.electricityUnitPrice;
+  const waterUsage = data.waterCurrent - data.waterPrevious;
+  const waterAmount = waterUsage * room.waterUnitPrice;
+
+  // Calculate total amount
+  const totalAmount = electricityAmount + waterAmount + room.price + (room.internetFee || 0) + (room.parkingFee || 0) + (room.serviceFee || 0) + (data.otherFee || 0);
+
   const paymentData: any = {
     tenantId: new Types.ObjectId(data.tenantId),
     roomId: new Types.ObjectId(data.roomId),
     month: data.month,
     electricityPrevious: data.electricityPrevious,
     electricityCurrent: data.electricityCurrent,
-    electricityAmount: data.electricityAmount,
+    electricityAmount,
     waterPrevious: data.waterPrevious,
     waterCurrent: data.waterCurrent,
-    waterAmount: data.waterAmount,
+    waterAmount,
     otherFee: data.otherFee || 0,
-    amount: data.amount,
+    rentAmount: room.price,
+    internetFeeAmount: room.internetFee || 0,
+    parkingFeeAmount: room.parkingFee || 0,
+    serviceFeeAmount: room.serviceFee || 0,
+    amount: totalAmount,
     dueDate: data.dueDate,
     status: data.status,
   };
@@ -80,7 +95,7 @@ export const getPayments = async (params?: GetPaymentsParams, userRole?: number,
   const skip = (page - 1) * limit;
 
   const total = await paymentModel.countDocuments(query);
-  const payments = await paymentModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit);
+  const payments = await paymentModel.find(query).populate('roomId').sort({ createdAt: -1 }).skip(skip).limit(limit);
 
   return {
     total,

@@ -22,6 +22,11 @@ export interface IPayment extends mongoose.Document {
 
   otherFee?: number;
 
+  rentAmount: number;
+  internetFeeAmount: number;
+  parkingFeeAmount: number;
+  serviceFeeAmount: number;
+
   amount: number;
 
   dueDate: Date;
@@ -58,6 +63,11 @@ const paymentSchema = new Schema<IPayment>(
     waterAmount: { type: Number, required: true },
 
     otherFee: { type: Number, default: 0 },
+
+    rentAmount: { type: Number, required: true },
+    internetFeeAmount: { type: Number, default: 0 },
+    parkingFeeAmount: { type: Number, default: 0 },
+    serviceFeeAmount: { type: Number, default: 0 },
 
     amount: { type: Number, required: true },
 

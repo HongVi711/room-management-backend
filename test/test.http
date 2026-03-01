@@ -695,19 +695,17 @@ Content-Type: application/json
   "month": "2024-02",
   "electricityPrevious": 1000,
   "electricityCurrent": 1050,
-  "electricityAmount": 150000,
   "waterPrevious": 50,
   "waterCurrent": 55,
-  "waterAmount": 75000,
   "otherFee": 50000,
-  "amount": 3175000,
   "dueDate": "2024-02-28T00:00:00.000Z",
+  "status": "pending",
   "notes": "Tiền phòng tháng 2/2024"
 }
 
 ###
 # EXPECT: 201 Created
-# Response sẽ có payment data mới
+# Response sẽ có payment data mới với amount được tính tự động từ meter readings và room pricing
 ###
 
 ### Get all payments (SUCCESS - OWNER)

@@ -11,6 +11,7 @@ interface CreateBuildingInput extends CreateBuildingDto {
   defaultInternetFee?: number;
   defaultParkingFee?: number;
   defaultServiceFee?: number;
+  area?: number;
 }
 
 export const createBuilding = async (
@@ -25,7 +26,7 @@ export const createBuilding = async (
       number: `${data.name}_room${i}`,
       buildingId: building._id,
       floor: Math.ceil(i / 10), // Default: 10 rooms per floor
-      area: 25, // Default area
+      area: data.area , // Default area
       
       // Giá mặc định từ frontend
       price: data.defaultRoomPrice ,

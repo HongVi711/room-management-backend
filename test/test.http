@@ -197,7 +197,8 @@ Content-Type: application/json
   "defaultWaterUnitPrice": 18000,
   "defaultInternetFee": 250000,
   "defaultParkingFee": 200000,
-  "defaultServiceFee": 150000
+  "defaultServiceFee": 150000,
+  "area": 30
 }
 
 ###

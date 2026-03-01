@@ -16,6 +16,7 @@ interface CreatePaymentInput {
   otherFee?: number;
   amount: number;
   dueDate: Date;
+  status: string;
   notes?: string;
 }
 
@@ -23,6 +24,8 @@ interface GetPaymentsParams {
   status?: string;
   month?: string;
   tenantId?: string;
+  page?: number;
+  limit?: number;
 }
 
 export const createPayment = async (data: CreatePaymentInput) => {
@@ -40,6 +43,7 @@ export const createPayment = async (data: CreatePaymentInput) => {
     otherFee: data.otherFee || 0,
     amount: data.amount,
     dueDate: data.dueDate,
+    status: data.status,
   };
 
   if (data.notes) {
@@ -71,11 +75,18 @@ export const getPayments = async (params?: GetPaymentsParams, userRole?: number,
     query.month = params.month;
   }
 
-  const payments = await paymentModel.find(query).sort({ createdAt: -1 });
+  const page = params?.page || 1;
+  const limit = params?.limit || 10;
+  const skip = (page - 1) * limit;
+
+  const total = await paymentModel.countDocuments(query);
+  const payments = await paymentModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit);
 
   return {
-    count: payments.length,
-    payments,
+    total,
+    page,
+    limit,
+    data: payments,
   };
 };
 

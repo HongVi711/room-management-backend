@@ -41,19 +41,18 @@ export const createPaymentController = async (req: Request, res: Response) => {
 // ===============================
 export const getPaymentsController = async (req: Request, res: Response) => {
   try {
-    const { status, month, tenantId } = req.query;
+    const { status, month, tenantId, page, limit } = req.query;
 
     const params: any = {};
     if (status) params.status = status;
     if (month) params.month = month;
     if (tenantId) params.tenantId = tenantId;
+    if (page) params.page = parseInt(page as string);
+    if (limit) params.limit = parseInt(limit as string);
 
     const result = await getPayments(params, (req as any).user.role, (req as any).user.id);
 
-    return res.status(200).json({
-      count: result.count,
-      data: result.payments,
-    });
+    return res.status(200).json(result);
   } catch (error: any) {
     return res.status(500).json({
       message: error.message || "Failed to fetch payments",

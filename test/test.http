@@ -690,8 +690,8 @@ Authorization: Bearer {{owner_token}}
 Content-Type: application/json
 
 {
-  "tenantId": "698dc93abb72c6ab681bc0ce",
-  "roomId": "69981d9e46c8af57f060929c",
+  "tenantId": "69a3fa9aa2124fac95dfe52c",
+  "roomId": "69a3f9dca2124fac95dfe514",
   "month": "2024-02",
   "electricityPrevious": 1000,
   "electricityCurrent": 1050,

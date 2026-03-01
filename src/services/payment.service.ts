@@ -1,23 +1,53 @@
-import paymentModel, { PaymentStatus } from "../models/payment.model";
+import paymentModel, { IPayment, PaymentStatus } from "../models/payment.model";
+import Room from "../models/room.model";
 import { ROLE } from "../utils/app.constants";
+import { Types } from "mongoose";
 
 interface CreatePaymentInput {
   tenantId: string;
   roomId: string;
-  amount: number;
   month: string;
-  dueDate: string;
-  description?: string;
+  electricityPrevious: number;
+  electricityCurrent: number;
+  electricityAmount: number;
+  waterPrevious: number;
+  waterCurrent: number;
+  waterAmount: number;
+  otherFee?: number;
+  amount: number;
+  dueDate: Date;
+  notes?: string;
 }
 
 interface GetPaymentsParams {
-  status?: PaymentStatus;
+  status?: string;
   month?: string;
   tenantId?: string;
 }
 
 export const createPayment = async (data: CreatePaymentInput) => {
-  const payment = await paymentModel.create(data);
+  // Không cần lấy Room để tính giá, frontend đã cung cấp đầy đủ
+  const paymentData: any = {
+    tenantId: new Types.ObjectId(data.tenantId),
+    roomId: new Types.ObjectId(data.roomId),
+    month: data.month,
+    electricityPrevious: data.electricityPrevious,
+    electricityCurrent: data.electricityCurrent,
+    electricityAmount: data.electricityAmount,
+    waterPrevious: data.waterPrevious,
+    waterCurrent: data.waterCurrent,
+    waterAmount: data.waterAmount,
+    otherFee: data.otherFee || 0,
+    amount: data.amount,
+    dueDate: data.dueDate,
+  };
+
+  if (data.notes) {
+    paymentData.notes = data.notes;
+  }
+
+  const payment = await paymentModel.create(paymentData);
+
   return payment;
 };
 
@@ -26,9 +56,9 @@ export const getPayments = async (params?: GetPaymentsParams, userRole?: number,
 
   // Filter by user role
   if (userRole === ROLE.TENANT && userId) {
-    query.tenantId = userId;
+    query.tenantId = new Types.ObjectId(userId);
   } else if (params?.tenantId) {
-    query.tenantId = params.tenantId;
+    query.tenantId = new Types.ObjectId(params.tenantId);
   }
 
   // Filter by status
@@ -57,22 +87,15 @@ export const getPaymentById = async (paymentId: string, userRole?: number, userI
   }
 
   // Tenant can only view their own payments
-  if (userRole === ROLE.TENANT && payment.tenantId !== userId) {
+  if (userRole === ROLE.TENANT && payment.tenantId.toString() !== userId) {
     throw new Error("Access denied");
   }
 
   return payment;
 };
 
-export const updatePayment = async (paymentId: string, updateData: any) => {
-  const payment = await paymentModel.findByIdAndUpdate(
-    paymentId,
-    updateData,
-    {
-      new: true,
-      runValidators: true,
-    }
-  );
+export const updatePayment = async (paymentId: string, data: Partial<IPayment>) => {
+  const payment = await paymentModel.findByIdAndUpdate(paymentId, data, { new: true });
 
   if (!payment) {
     throw new Error("Payment not found");
@@ -88,14 +111,13 @@ export const markAsPaid = async (paymentId: string, userRole?: number, userId?: 
     throw new Error("Payment not found");
   }
 
-  // Tenant can only pay their own bills
-  if (userRole === ROLE.TENANT && payment.tenantId !== userId) {
+  // Tenant can only mark their own payments as paid
+  if (userRole === ROLE.TENANT && payment.tenantId.toString() !== userId) {
     throw new Error("Access denied");
   }
 
   payment.status = PaymentStatus.PAID;
-  payment.paidDate = new Date().toISOString();
-
+  payment.paidDate = new Date();
   await payment.save();
 
   return payment;

@@ -4,6 +4,13 @@ import roomModel from "../models/room.model";
 
 interface CreateBuildingInput extends CreateBuildingDto {
   ownerId: string; // owner user id from auth
+  // Default prices for rooms
+  defaultRoomPrice?: number;
+  defaultElectricityUnitPrice?: number;
+  defaultWaterUnitPrice?: number;
+  defaultInternetFee?: number;
+  defaultParkingFee?: number;
+  defaultServiceFee?: number;
 }
 
 export const createBuilding = async (
@@ -19,7 +26,15 @@ export const createBuilding = async (
       buildingId: building._id,
       floor: Math.ceil(i / 10), // Default: 10 rooms per floor
       area: 25, // Default area
-      price: 3000000, // Default price
+      
+      // Giá mặc định từ frontend
+      price: data.defaultRoomPrice ,
+      electricityUnitPrice: data.defaultElectricityUnitPrice ,
+      waterUnitPrice: data.defaultWaterUnitPrice ,
+      internetFee: data.defaultInternetFee ,
+      parkingFee: data.defaultParkingFee ,
+      serviceFee: data.defaultServiceFee ,
+      
       status: "available",
       description: `Room ${i} in ${data.name}`,
     });

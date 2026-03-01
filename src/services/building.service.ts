@@ -169,6 +169,16 @@ export const updateBuilding = async (
   data: UpdateBuildingDto,
   ownerId: string,
 ): Promise<IBuilding | null> => {
+  // Check if building has any occupied rooms
+  const occupiedRoomsCount = await roomModel.countDocuments({
+    buildingId: buildingId,
+    currentTenant: { $exists: true, $ne: null },
+  });
+
+  if (occupiedRoomsCount > 0) {
+    throw new Error("Cannot update building with occupied rooms");
+  }
+
   const building = await Building.findOneAndUpdate(
     { _id: buildingId, ownerId: ownerId },
     data,

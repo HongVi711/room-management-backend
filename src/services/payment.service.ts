@@ -90,18 +90,25 @@ export const getPayments = async (params?: GetPaymentsParams, userRole?: number,
     query.month = params.month;
   }
 
-  const page = params?.page || 1;
-  const limit = params?.limit || 10;
+  const page = Math.max(1, params?.page || 1);
+  const limit = Math.min(100, Math.max(1, params?.limit || 10));
   const skip = (page - 1) * limit;
 
   const total = await paymentModel.countDocuments(query);
+  const totalPages = Math.ceil(total / limit);
+
   const payments = await paymentModel.find(query).populate('roomId').sort({ createdAt: -1 }).skip(skip).limit(limit);
 
   return {
-    total,
-    page,
-    limit,
-    data: payments,
+    payments,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
+    },
   };
 };
 

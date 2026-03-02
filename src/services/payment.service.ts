@@ -39,7 +39,14 @@ export const createPayment = async (data: CreatePaymentInput) => {
   const waterAmount = waterUsage * room.waterUnitPrice;
 
   // Calculate total amount
-  const totalAmount = electricityAmount + waterAmount + room.price + (room.internetFee || 0) + (room.parkingFee || 0) + (room.serviceFee || 0) + (data.otherFee || 0);
+  const totalAmount =
+    electricityAmount +
+    waterAmount +
+    room.price +
+    (room.internetFee || 0) +
+    (room.parkingFee || 0) +
+    (room.serviceFee || 0) +
+    (data.otherFee || 0);
 
   const paymentData: any = {
     tenantId: new Types.ObjectId(data.tenantId),
@@ -70,7 +77,11 @@ export const createPayment = async (data: CreatePaymentInput) => {
   return payment;
 };
 
-export const getPayments = async (params?: GetPaymentsParams, userRole?: number, userId?: string) => {
+export const getPayments = async (
+  params?: GetPaymentsParams,
+  userRole?: number,
+  userId?: string,
+) => {
   const query: any = {};
 
   // Filter by user role
@@ -97,7 +108,12 @@ export const getPayments = async (params?: GetPaymentsParams, userRole?: number,
   const total = await paymentModel.countDocuments(query);
   const totalPages = Math.ceil(total / limit);
 
-  const payments = await paymentModel.find(query).populate('roomId').sort({ createdAt: -1 }).skip(skip).limit(limit);
+  const payments = await paymentModel
+    .find(query)
+    .populate("roomId")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
 
   return {
     payments,
@@ -112,7 +128,11 @@ export const getPayments = async (params?: GetPaymentsParams, userRole?: number,
   };
 };
 
-export const getPaymentById = async (paymentId: string, userRole?: number, userId?: string) => {
+export const getPaymentById = async (
+  paymentId: string,
+  userRole?: number,
+  userId?: string,
+) => {
   const payment = await paymentModel.findById(paymentId);
 
   if (!payment) {
@@ -127,8 +147,27 @@ export const getPaymentById = async (paymentId: string, userRole?: number, userI
   return payment;
 };
 
-export const updatePayment = async (paymentId: string, data: Partial<IPayment>) => {
-  const payment = await paymentModel.findByIdAndUpdate(paymentId, data, { new: true });
+export const getPaymentByUserId = async (userId: string) => {
+  return await paymentModel
+    .find({ tenantId: userId })
+    .populate({
+      path: "roomId",
+      select: "_id number floor buildingId",
+      populate: {
+        path: "buildingId",
+        select: "_id name",
+      },
+    })
+    .sort({ createdAt: -1 });
+};
+
+export const updatePayment = async (
+  paymentId: string,
+  data: Partial<IPayment>,
+) => {
+  const payment = await paymentModel.findByIdAndUpdate(paymentId, data, {
+    new: true,
+  });
 
   if (!payment) {
     throw new Error("Payment not found");
@@ -137,7 +176,11 @@ export const updatePayment = async (paymentId: string, data: Partial<IPayment>) 
   return payment;
 };
 
-export const markAsPaid = async (paymentId: string, userRole?: number, userId?: string) => {
+export const markAsPaid = async (
+  paymentId: string,
+  userRole?: number,
+  userId?: string,
+) => {
   const payment = await paymentModel.findById(paymentId);
 
   if (!payment) {

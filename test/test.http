@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:3000
 @tenant_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGRjOTNhYmJmMmM2YWI2ODFiYzBjZSIsInJvbGUiOjAsImlhdCI6MTc3MDk4MDc2MywiZXhwIjoxNzcxNTg1NTYzfQ.W-k_X0sbUVPe8Tbhtq4WUNOqTznCbgVvWQVGeRl6jWo
-@owner_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGRhNjFmNDBlNDJlMWRiOWJhN2EyZCIsInJvbGUiOjEsImlhdCI6MTc3MTg1NDA5OCwiZXhwIjoxNzcyNDU4ODk4fQ.81cxa0IYFozBnHcF5W6xzzUFpfeH8xbyFwP8vXsjP_E
+@owner_token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGRhNjFmNDBlNDJlMWRiOWJhN2EyZCIsInJvbGUiOjEsImlhdCI6MTc3MjQ2NDQ4NSwiZXhwIjoxNzczMDY5Mjg1fQ.ndUBfc3XO1pzrxFAQaL0hjRf5B0dhU4g4DKKVMmfBMM
 
 #######################################
 ### 2️⃣ LOGIN TENANT
@@ -303,7 +303,7 @@ Content-Type: application/json
 ###
 
 ### Delete building (SUCCESS - OWNER)
-DELETE {{baseUrl}}/api/buildings/698ed98d24f5a32a41e3fde4
+DELETE {{baseUrl}}/api/buildings/69a5ab2457c629035c065960
 Authorization: Bearer {{owner_token}}
 
 ###

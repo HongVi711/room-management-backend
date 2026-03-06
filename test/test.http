@@ -38,6 +38,68 @@ POST {{baseUrl}}/api/auth/logout
 Authorization: Bearer {{owner_token}}
 
 #######################################
+### 4️⃣ CHANGE PASSWORD
+#######################################
+
+### Change password (SUCCESS - TENANT)
+PUT {{baseUrl}}/api/auth/change-password
+Authorization: Bearer {{tenant_token}}
+Content-Type: application/json
+
+{
+  "oldPassword": "0987654321",
+  "newPassword": "newpassword123"
+}
+
+###
+# EXPECT: 200 OK
+# Response: {"message": "Password changed successfully"}
+###
+
+### Change password (SUCCESS - OWNER)
+PUT {{baseUrl}}/api/auth/change-password
+Authorization: Bearer {{owner_token}}
+Content-Type: application/json
+
+{
+  "oldPassword": "123456",
+  "newPassword": "newownerpassword123"
+}
+
+###
+# EXPECT: 200 OK
+# Response: {"message": "Password changed successfully"}
+###
+
+### Change password (WRONG OLD PASSWORD - ERROR)
+PUT {{baseUrl}}/api/auth/change-password
+Authorization: Bearer {{tenant_token}}
+Content-Type: application/json
+
+{
+  "oldPassword": "wrongpassword",
+  "newPassword": "newpassword123"
+}
+
+###
+# EXPECT: 400 Bad Request
+# Response: {"message": "Old password is incorrect"}
+###
+
+### Change password (WITHOUT AUTH - FAIL)
+PUT {{baseUrl}}/api/auth/change-password
+Content-Type: application/json
+
+{
+  "oldPassword": "0987654321",
+  "newPassword": "newpassword123"
+}
+
+###
+# EXPECT: 401 Unauthorized
+###
+
+#######################################
 ### 7️⃣ TEST GET USER BY ID
 #######################################
 

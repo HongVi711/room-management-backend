@@ -1296,6 +1296,33 @@ Authorization: Bearer {{owner_token}}
 # Response will have filtered rooms with building info, tenant info, and meter reading
 ###
 
+### Get rooms with meter readings with room number search (SUCCESS - OWNER)
+GET {{baseUrl}}/api/rooms/meter-reading?month=3&year=2025&roomNumber=101
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response will have rooms matching room number "101" (case-insensitive)
+###
+
+### Get rooms with meter readings with room number partial search (SUCCESS - OWNER)
+GET {{baseUrl}}/api/rooms/meter-reading?month=3&year=2025&roomNumber=10
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response will have rooms containing "10" in room number (e.g., 101, 102, 210)
+###
+
+### Get rooms with meter readings with combined filters (SUCCESS - OWNER)
+GET {{baseUrl}}/api/rooms/meter-reading?month=3&year=2025&buildingId=698da61f40e42e1db9ba7a2d&floor=2&roomNumber=201
+Authorization: Bearer {{owner_token}}
+
+###
+# EXPECT: 200 OK
+# Response will have rooms matching all filters: building, floor, and room number
+###
+
 ### Get rooms with meter readings with pagination (SUCCESS - OWNER)
 GET {{baseUrl}}/api/rooms/meter-reading?month=3&year=2025&page=1&limit=5
 Authorization: Bearer {{owner_token}}

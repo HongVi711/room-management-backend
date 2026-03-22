@@ -265,7 +265,7 @@ export const getRoomsWithMeterReadingsController = async (
 ) => {
   try {
     const currentUser = (req as any).user;
-    const { month, year, buildingId, floor, page, limit } = req.query;
+    const { month, year, buildingId, buildingName, roomNumber, page, limit } = req.query;
 
     if (currentUser.role !== ROLE.OWNER) {
       return res.status(403).json({
@@ -297,7 +297,8 @@ export const getRoomsWithMeterReadingsController = async (
     // Build search params
     const searchParams: any = {};
     if (buildingId) searchParams.buildingId = buildingId as string;
-    if (floor) searchParams.floor = parseInt(floor as string);
+    if (roomNumber) searchParams.roomNumber = roomNumber as string;
+    if (buildingName) searchParams.buildingName = buildingName as string;
 
     // Build pagination
     const pagination: any = {};

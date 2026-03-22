@@ -244,7 +244,8 @@ export const getRoomsWithMeterReadings = async (
   year: number,
   searchParams?: {
     buildingId?: string;
-    floor?: number;
+    roomNumber?: string;
+    buildingName?: string;
   },
   pagination?: {
     page?: number;
@@ -263,8 +264,8 @@ export const getRoomsWithMeterReadings = async (
     matchStage.buildingId = new Types.ObjectId(searchParams.buildingId);
   }
 
-  if (searchParams?.floor !== undefined) {
-    matchStage.floor = searchParams.floor;
+  if (searchParams?.roomNumber) {
+    matchStage.number = { $regex: searchParams.roomNumber, $options: "i" };
   }
 
   const rooms = await Room.aggregate([
@@ -285,6 +286,18 @@ export const getRoomsWithMeterReadings = async (
         preserveNullAndEmptyArrays: true,
       },
     },
+    ...(searchParams?.buildingName
+      ? [
+          {
+            $match: {
+              "building.name": {
+                $regex: searchParams.buildingName,
+                $options: "i", // không phân biệt hoa thường
+              },
+            },
+          },
+        ]
+      : []),
     {
       $lookup: {
         from: "users",

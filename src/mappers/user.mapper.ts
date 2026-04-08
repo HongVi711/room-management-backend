@@ -10,7 +10,7 @@ export const toUserResponse = (user: IUser): UserResponseDto => ({
   ...(user.cccd && { cccd: user.cccd }),
   ...(user.createdAt && { createdAt: user.createdAt.toISOString() }),
   ...(user.updatedAt && { updatedAt: user.updatedAt.toISOString() }),
-    ...(user.cccdImages && {
+  ...(user.cccdImages && {
     cccdImages: {
       front: user.cccdImages.front?.url || "",
       back: user.cccdImages.back?.url || "",

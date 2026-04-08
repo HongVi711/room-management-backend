@@ -5,7 +5,7 @@ import { getBuildingById } from "./building.service";
 import { ROOMSTATUS, TenantStatus } from "../utils/app.constants";
 import { Types } from "mongoose";
 import Tenant from "../models/tenant.model";
-import Payment from "../models/payment.model";
+import PaymentTransaction from "../models/payment-transaction.model";
 import MeterReading from "../models/MeterReading.model";
 
 export const updateRoom = async (
@@ -188,8 +188,26 @@ export const getOccupiedRooms = async (
     limit?: number;
   },
 ) => {
-  // Get room IDs that already have payments
-  const roomsWithPayments = await Payment.distinct('roomId');
+  // Get room IDs that already have payment transactions through invoices
+  const paymentTransactions = await PaymentTransaction.aggregate([
+    {
+      $lookup: {
+        from: "invoices",
+        localField: "invoiceId",
+        foreignField: "_id",
+        as: "invoice",
+      },
+    },
+    { $unwind: "$invoice" },
+    {
+      $group: {
+        _id: "$invoice.roomId",
+        hasPayments: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const roomsWithPayments = paymentTransactions.map((pt) => pt._id);
 
   let query: any = {
     currentTenant: { $exists: true, $ne: null }, // Only rooms with current tenant
@@ -236,7 +254,10 @@ export const getOccupiedRooms = async (
 };
 
 export const getRoomByUserId = (userId: string) => {
-  return Room.findOne({ currentTenant: userId, isDeleted: false }).populate("buildingId", "name");
+  return Room.findOne({ currentTenant: userId, isDeleted: false }).populate(
+    "buildingId",
+    "name",
+  );
 };
 
 export const getRoomsWithMeterReadings = async (

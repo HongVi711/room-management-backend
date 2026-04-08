@@ -2,6 +2,7 @@ import { Schema, model, Document, Types } from "mongoose";
 
 export enum InvoiceStatus {
   UNPAID = "unpaid",
+  PARTIAL = "partial",
   PAID = "paid",
   OVERDUE = "overdue",
 }

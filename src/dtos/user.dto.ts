@@ -1,4 +1,12 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Length, Matches } from "class-validator";
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+} from "class-validator";
 import { Type } from "class-transformer";
 import { ROLE } from "../utils/app.constants";
 
@@ -13,10 +21,10 @@ export class CreateUserDto {
   name!: string;
 
   // Thêm password nếu cần (hoặc dùng phone làm password như logic cũ của bạn)
-//   @IsString()
-//   @IsNotEmpty()
-//   @Length(6, 50, { message: "Password phải từ 6 ký tự" })
-//   password!: string;
+  //   @IsString()
+  //   @IsNotEmpty()
+  //   @Length(6, 50, { message: "Password phải từ 6 ký tự" })
+  //   password!: string;
 
   @IsString()
   @IsNotEmpty()

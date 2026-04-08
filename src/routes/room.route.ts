@@ -1,9 +1,9 @@
 import { Router } from "express";
 import {
   updateRoomController,
-  deleteRoomController,
-  assignTenantController,
-  removeTenantController,
+  // deleteRoomController,
+  // assignTenantController,
+  // removeTenantController,
   getAllRoomsController,
   getRoomByIdController,
   getOccupiedRoomsController,
@@ -33,27 +33,27 @@ router.put(
   updateRoomController,
 );
 
-router.delete(
-  "/:id",
-  authMiddleware,
-  requireRole([ROLE.OWNER]),
-  deleteRoomController,
-);
+// router.delete(
+//   "/:id",
+//   authMiddleware,
+//   requireRole([ROLE.OWNER]),
+//   deleteRoomController,
+// );
 
-router.post(
-  "/:id/assign-tenant",
-  authMiddleware,
-  requireRole([ROLE.OWNER]),
-  validateDto(AssignTenantDto),
-  assignTenantController,
-);
+// router.post(
+//   "/:id/assign-tenant",
+//   authMiddleware,
+//   requireRole([ROLE.OWNER]),
+//   validateDto(AssignTenantDto),
+//   assignTenantController,
+// );
 
-router.post(
-  "/:id/remove-tenant",
-  authMiddleware,
-  requireRole([ROLE.OWNER]),
-  removeTenantController,
-);
+// router.post(
+//   "/:id/remove-tenant",
+//   authMiddleware,
+//   requireRole([ROLE.OWNER]),
+//   removeTenantController,
+// );
 
 router.get(
   "/occupied",

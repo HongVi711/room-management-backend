@@ -25,7 +25,11 @@ export interface IRoom extends Document {
 const roomSchema = new Schema<IRoom>(
   {
     number: { type: String, required: true },
-    buildingId: { type: Schema.Types.ObjectId, ref: "Building", required: true },
+    buildingId: {
+      type: Schema.Types.ObjectId,
+      ref: "Building",
+      required: true,
+    },
     area: { type: Number, required: true },
 
     // Giá mặc định
@@ -49,7 +53,7 @@ const roomSchema = new Schema<IRoom>(
     description: String,
     isDeleted: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default model<IRoom>("Room", roomSchema);

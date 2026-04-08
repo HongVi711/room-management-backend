@@ -1,4 +1,11 @@
-import { IsString, IsNumber, IsEmail, IsOptional, IsArray, ValidateNested } from "class-validator";
+import {
+  IsString,
+  IsNumber,
+  IsEmail,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+} from "class-validator";
 import { Type } from "class-transformer";
 
 class CreateRoomDto {
@@ -51,9 +58,6 @@ export class CreateBuildingDto {
 
   @IsString()
   city!: string;
-
-
-
 
   @IsOptional()
   @IsString()

@@ -76,11 +76,6 @@ export class UpdateRoomDto {
   livingFee?: number;
 
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  deposit?: number;
-
-  @IsOptional()
   @IsEnum(ROOMSTATUS)
   status?: ROOMSTATUS;
 
@@ -115,20 +110,15 @@ export class MemberUpdateDto {
   @IsOptional()
   cccdImages?: {
     front: {
-      url?: string;
-      publicId?: string;
+      url?: string; // Base64 string hoặc URL từ Cloudinary (backend sẽ tự upload nếu là base64)
+      publicId?: string; // Không cần gửi, backend sẽ tự động xử lý
     };
     back: {
-      url?: string;
-      publicId?: string;
+      url?: string; // Base64 string hoặc URL từ Cloudinary (backend sẽ tự upload nếu là base64)
+      publicId?: string; // Không cần gửi, backend sẽ tự động xử lý
     };
   };
 
   @IsOptional()
   isRepresentative?: boolean;
-}
-
-export class AssignTenantDto {
-  @IsString()
-  userId!: string;
 }

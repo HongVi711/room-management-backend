@@ -1,31 +1,60 @@
 import Room, { IRoom } from "../models/room.model";
 import Building from "../models/building.model";
-import { UpdateRoomDto, MemberUpdateDto } from "../dtos/room.dto";
+import { UpdateRoomDto } from "../dtos/room.dto";
 import { getBuildingById } from "./building.service";
-import { ROOMSTATUS, TenantStatus } from "../utils/app.constants";
+import { ROOMSTATUS } from "../utils/app.constants";
 import { Types } from "mongoose";
-import Tenant from "../models/tenant.model";
 import PaymentTransaction from "../models/payment-transaction.model";
 import {
   PaginationUtil,
   PaginationParams,
   PaginatedResponse,
 } from "../utils/pagination.util";
+import { v2 as cloudinary } from "cloudinary";
+
+const deleteImageFromCloudinary = async (publicId: string): Promise<void> => {
+  if (!publicId || publicId === "") return;
+  try {
+    await cloudinary.uploader.destroy(publicId);
+  } catch (error) {}
+};
+
+const uploadImageToCloudinary = async (
+  base64String: string,
+): Promise<{ url: string; publicId: string }> => {
+  if (!base64String || base64String === "") {
+    return { url: "", publicId: "" };
+  }
+
+  if (!base64String.startsWith("data:image/")) {
+    return { url: base64String, publicId: "" };
+  }
+
+  try {
+    const result = await cloudinary.uploader.upload(base64String, {
+      folder: "users_cccd",
+      allowed_formats: ["jpg", "png", "jpeg", "webp"],
+    });
+    return {
+      url: result.secure_url,
+      publicId: result.public_id,
+    };
+  } catch (error) {
+    throw new Error("Không thể upload ảnh lên Cloudinary");
+  }
+};
 
 export const updateRoom = async (
   roomId: string,
   data: UpdateRoomDto,
   ownerId: string,
 ): Promise<IRoom | null> => {
-  // 1. Tìm phòng và kiểm tra isDeleted
   const room = await Room.findOne({ _id: roomId, isDeleted: false });
   if (!room) throw new Error("Không tìm thấy phòng hoặc phòng đã bị xóa");
 
-  // 2. Kiểm tra quyền sở hữu
   const building = await Building.findOne({ _id: room.buildingId, ownerId });
   if (!building) throw new Error("Bạn không có quyền chỉnh sửa phòng này");
 
-  // 3. Kiểm tra trùng số phòng
   if (data.number && data.number !== room.number) {
     const existingRoom = await Room.findOne({
       buildingId: room.buildingId,
@@ -37,7 +66,6 @@ export const updateRoom = async (
       throw new Error(`Số phòng ${data.number} đã tồn tại trong tòa nhà này`);
   }
 
-  // Chuyển sang object thuần để xử lý mảng dễ dàng
   let updatedMembers: any[] = room.toObject().members;
 
   if (data.members) {
@@ -49,47 +77,97 @@ export const updateRoom = async (
       .filter((m) => m._id)
       .map((m) => m._id!.toString());
 
-    // Xóa những người không có trong danh sách gửi lên
+    const removedMembers = updatedMembers.filter(
+      (m) => !incomingMemberIds.includes(m._id.toString()),
+    );
+
+    for (const removedMember of removedMembers) {
+      await deleteImageFromCloudinary(removedMember.cccdImages.front.publicId);
+      await deleteImageFromCloudinary(removedMember.cccdImages.back.publicId);
+    }
+
     updatedMembers = updatedMembers.filter((m) =>
       incomingMemberIds.includes(m._id.toString()),
     );
 
     for (const memberData of data.members) {
-      // Chuyển đổi userId sang ObjectId hoặc null một cách an toàn
       const userId =
         memberData.userId && memberData.userId.toString().length === 24
           ? new Types.ObjectId(memberData.userId)
           : null;
 
       if (memberData._id) {
-        // Cập nhật member cũ
         const index = updatedMembers.findIndex(
           (m) => m._id.toString() === memberData._id?.toString(),
         );
         if (index !== -1) {
+          const existingMember = updatedMembers[index];
+          let frontImageData = {
+            url: existingMember.cccdImages.front.url,
+            publicId: existingMember.cccdImages.front.publicId,
+          };
+          let backImageData = {
+            url: existingMember.cccdImages.back.url,
+            publicId: existingMember.cccdImages.back.publicId,
+          };
+
+          if (memberData.cccdImages?.front?.url) {
+            const uploadedFront = await uploadImageToCloudinary(
+              memberData.cccdImages.front.url,
+            );
+            if (
+              uploadedFront.url !== existingMember.cccdImages.front.url &&
+              uploadedFront.publicId
+            ) {
+              await deleteImageFromCloudinary(
+                existingMember.cccdImages.front.publicId,
+              );
+            }
+            frontImageData = uploadedFront;
+          }
+
+          if (memberData.cccdImages?.back?.url) {
+            const uploadedBack = await uploadImageToCloudinary(
+              memberData.cccdImages.back.url,
+            );
+            if (
+              uploadedBack.url !== existingMember.cccdImages.back.url &&
+              uploadedBack.publicId
+            ) {
+              await deleteImageFromCloudinary(
+                existingMember.cccdImages.back.publicId,
+              );
+            }
+            backImageData = uploadedBack;
+          }
+
           updatedMembers[index] = {
-            ...updatedMembers[index],
+            ...existingMember,
             ...memberData,
+            cccdImages: {
+              front: frontImageData,
+              back: backImageData,
+            },
             _id: new Types.ObjectId(memberData._id),
             userId,
           };
         }
       } else {
-        // Thêm member mới với đầy đủ các field required
+        const frontImageData = memberData.cccdImages?.front?.url
+          ? await uploadImageToCloudinary(memberData.cccdImages.front.url)
+          : { url: "", publicId: "" };
+        const backImageData = memberData.cccdImages?.back?.url
+          ? await uploadImageToCloudinary(memberData.cccdImages.back.url)
+          : { url: "", publicId: "" };
+
         updatedMembers.push({
           name: memberData.name || "",
           phone: memberData.phone || "",
           licensePlate: memberData.licensePlate || "",
           isRepresentative: !!memberData.isRepresentative,
           cccdImages: {
-            front: {
-              url: memberData.cccdImages?.front?.url || "",
-              publicId: memberData.cccdImages?.front?.publicId || "",
-            },
-            back: {
-              url: memberData.cccdImages?.back?.url || "",
-              publicId: memberData.cccdImages?.back?.publicId || "",
-            },
+            front: frontImageData,
+            back: backImageData,
           },
           _id: new Types.ObjectId(),
           userId,
@@ -98,7 +176,6 @@ export const updateRoom = async (
     }
   }
 
-  // 4. Xử lý logic trạng thái
   let newStatus = data.status || room.status;
   if (updatedMembers.length > 0 && newStatus === ROOMSTATUS.AVAILABLE) {
     newStatus = ROOMSTATUS.OCCUPIED;
@@ -109,7 +186,6 @@ export const updateRoom = async (
     newStatus = ROOMSTATUS.AVAILABLE;
   }
 
-  // Loại bỏ các trường không nên update trực tiếp từ data
   const { buildingId, members, ...safeUpdateData } = data;
 
   const updatedRoom = await Room.findByIdAndUpdate(
@@ -150,96 +226,6 @@ export const deleteRoom = async (
   }
 
   return deletedRoom;
-};
-
-export const assignTenant = async (
-  roomId: string,
-  userId: string,
-  ownerId: string,
-): Promise<IRoom | null> => {
-  const room = await Room.findById(roomId);
-  if (!room) return null;
-
-  const building = await getBuildingById(room.buildingId.toString());
-  if (!building || building.ownerId.toString() !== ownerId) return null;
-
-  if (room.status !== ROOMSTATUS.AVAILABLE) {
-    throw new Error("Room is not available for assignment");
-  }
-
-  await Tenant.create({
-    userId: new Types.ObjectId(userId),
-    roomId: new Types.ObjectId(roomId),
-    moveInDate: new Date(),
-    contractEndDate: null,
-    emergencyContact: "",
-    status: TenantStatus.ACTIVE,
-  });
-
-  room.members.push({
-    _id: new Types.ObjectId(),
-    userId: new Types.ObjectId(userId),
-    name: "", // Will be populated from user data
-    phone: "",
-    licensePlate: "",
-    cccdImages: {
-      front: { url: "", publicId: "" },
-      back: { url: "", publicId: "" },
-    },
-    isRepresentative: true, // First member is representative
-  } as any);
-  room.status = ROOMSTATUS.OCCUPIED;
-  await room.save();
-
-  return room;
-};
-
-export const removeTenant = async (
-  roomId: string,
-  ownerId: string,
-): Promise<IRoom | null> => {
-  const room = await Room.findById(roomId);
-  if (!room) return null;
-
-  const building = await getBuildingById(room.buildingId.toString());
-  if (!building || building.ownerId.toString() !== ownerId) return null;
-
-  if (!room.members || room.members.length === 0) {
-    throw new Error("Room has no tenants to remove");
-  }
-
-  // Remove the first tenant (representative) from the room
-  const representativeTenant = room.members.find(
-    (member) => member.isRepresentative,
-  );
-  if (!representativeTenant) {
-    throw new Error("No representative tenant found in the room");
-  }
-
-  if (representativeTenant.userId) {
-    await Tenant.findOneAndUpdate(
-      {
-        roomId: new Types.ObjectId(roomId),
-        userId: representativeTenant.userId,
-        status: TenantStatus.ACTIVE,
-      } as any,
-      {
-        status: TenantStatus.INACTIVE,
-      },
-    );
-  }
-
-  // Remove the representative tenant from members array
-  room.members = room.members.filter((member) => !member.isRepresentative);
-
-  // If no more members, set room to available
-  if (room.members.length === 0) {
-    room.status = ROOMSTATUS.AVAILABLE;
-  }
-
-  await room.save();
-
-  return room;
 };
 
 export const getAllRooms = async (
@@ -483,7 +469,6 @@ export const getRoomsWithMeterReadings = async (
         waterPricePerCubicMeter: 1,
         parkingFee: 1,
         livingFee: 1,
-        deposit: 1,
         status: 1,
         description: 1,
         createdAt: 1,

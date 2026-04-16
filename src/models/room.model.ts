@@ -32,7 +32,6 @@ export interface IRoom extends Document {
   waterPricePerCubicMeter: number;
   parkingFee: number;
   livingFee: number;
-  deposit: number;
   members: {
     _id: Types.ObjectId;
     userId?: Types.ObjectId | null;
@@ -75,7 +74,6 @@ const roomSchema = new Schema<IRoom>(
     waterPricePerCubicMeter: { type: Number, default: 0 },
     parkingFee: { type: Number, default: 0 },
     livingFee: { type: Number, default: 0 },
-    deposit: { type: Number, default: 0 },
 
     members: [memberSchema],
 

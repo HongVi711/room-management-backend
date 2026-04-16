@@ -31,10 +31,6 @@ class CreateRoomDto {
 
   @IsOptional()
   @IsNumber()
-  internetFee?: number;
-
-  @IsOptional()
-  @IsNumber()
   parkingFee?: number;
 
   @IsOptional()
@@ -123,10 +119,6 @@ export class UpdateBuildingDto {
   @IsOptional()
   @IsNumber()
   defaultWaterUnitPrice?: number;
-
-  @IsOptional()
-  @IsNumber()
-  defaultInternetFee?: number;
 
   @IsOptional()
   @IsNumber()

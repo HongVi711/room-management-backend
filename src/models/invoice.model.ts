@@ -29,19 +29,13 @@ export interface IInvoice extends Document {
 
   // ===== PHÍ =====
   rentAmount: number;
-  internetFee: number;
   parkingFee: number;
-  serviceFee: number;
+  livingFee: number;
   otherFee: number;
-
   totalAmount: number;
-
   dueDate: Date;
-
   notes: string;
-
   status: InvoiceStatus;
-
   createdAt: Date;
   updatedAt: Date;
 }
@@ -78,9 +72,8 @@ const invoiceSchema = new Schema<IInvoice>(
     waterCost: { type: Number, required: true },
 
     rentAmount: { type: Number, required: true },
-    internetFee: { type: Number, default: 0 },
     parkingFee: { type: Number, default: 0 },
-    serviceFee: { type: Number, default: 0 },
+    livingFee: { type: Number, default: 0 },
     otherFee: { type: Number, default: 0 },
 
     totalAmount: { type: Number, required: true },

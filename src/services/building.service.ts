@@ -20,7 +20,6 @@ interface CreateBuildingInput {
     waterUnitPrice: number;
     waterPricePerPerson?: number;
     waterPricePerCubicMeter?: number;
-    internetFee?: number;
     parkingFee?: number;
     serviceFee?: number;
     description?: string;

@@ -2,8 +2,6 @@ import { Router } from "express";
 import {
   updateRoomController,
   // deleteRoomController,
-  // assignTenantController,
-  // removeTenantController,
   getAllRoomsController,
   getRoomByIdController,
   getOccupiedRoomsController,
@@ -11,7 +9,7 @@ import {
   getRoomsWithMeterReadingsController,
 } from "../controllers/room.controller";
 import { validateDto } from "../middlewares/validate.middleware";
-import { UpdateRoomDto, AssignTenantDto } from "../dtos/room.dto";
+import { UpdateRoomDto } from "../dtos/room.dto";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { requireRole } from "../middlewares/role.middleware";
 import { ROLE } from "../utils/app.constants";
@@ -38,21 +36,6 @@ router.put(
 //   authMiddleware,
 //   requireRole([ROLE.OWNER]),
 //   deleteRoomController,
-// );
-
-// router.post(
-//   "/:id/assign-tenant",
-//   authMiddleware,
-//   requireRole([ROLE.OWNER]),
-//   validateDto(AssignTenantDto),
-//   assignTenantController,
-// );
-
-// router.post(
-//   "/:id/remove-tenant",
-//   authMiddleware,
-//   requireRole([ROLE.OWNER]),
-//   removeTenantController,
 // );
 
 router.get(

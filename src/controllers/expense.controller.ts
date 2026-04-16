@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { Types } from "mongoose";
 import {
   createExpense,
   getExpenses,
@@ -7,20 +8,18 @@ import {
   deleteExpense,
   getExpensesByBuilding,
 } from "../services/expense.service";
-import { ExpenseCategory } from "../models/Expense.model";
 import { CreateExpenseInput } from "../interfaces/expense.interface";
 
 export const createExpenseController = async (req: Request, res: Response) => {
   try {
-    const { buildingId, title, description, amount, category, expenseDate } =
-      req.body;
+    const { buildingId, title, description, amount, expenseDate } = req.body;
 
     // Validate required fields
-    if (!buildingId || !title || !amount || !category || !expenseDate) {
+    if (!buildingId || !title || !amount || !expenseDate) {
       return res.status(400).json({
         success: false,
         message:
-          "Thiếu các trường bắt buộc: buildingId, title, amount, category, expenseDate",
+          "Thiếu các trường bắt buộc: buildingId, title, amount, expenseDate",
       });
     }
 
@@ -29,14 +28,6 @@ export const createExpenseController = async (req: Request, res: Response) => {
       return res.status(400).json({
         success: false,
         message: "Số tiền phải là số dương",
-      });
-    }
-
-    // Validate category
-    if (!Object.values(ExpenseCategory).includes(category)) {
-      return res.status(400).json({
-        success: false,
-        message: "Danh mục chi phí không hợp lệ",
       });
     }
 
@@ -54,7 +45,6 @@ export const createExpenseController = async (req: Request, res: Response) => {
       title,
       description,
       amount: parseFloat(amount),
-      category,
       expenseDate: expenseDateObj,
     });
 
@@ -74,14 +64,7 @@ export const createExpenseController = async (req: Request, res: Response) => {
 
 export const getExpensesController = async (req: Request, res: Response) => {
   try {
-    const {
-      buildingId,
-      category,
-      startDate,
-      endDate,
-      page = 1,
-      limit = 10,
-    } = req.query;
+    const { buildingId, startDate, endDate, page = 1, limit = 10 } = req.query;
 
     // Validate pagination params
     const pageNum = parseInt(page as string);
@@ -103,7 +86,6 @@ export const getExpensesController = async (req: Request, res: Response) => {
 
     const result = await getExpenses({
       buildingId: buildingId as string,
-      category: category as string,
       startDate: startDate as string,
       endDate: endDate as string,
       page: pageNum,
@@ -167,8 +149,7 @@ export const getExpenseByIdController = async (req: Request, res: Response) => {
 export const updateExpenseController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { buildingId, title, description, amount, category, expenseDate } =
-      req.body;
+    const { buildingId, title, description, amount, expenseDate } = req.body;
 
     if (!id || typeof id !== "string") {
       return res.status(400).json({
@@ -185,14 +166,6 @@ export const updateExpenseController = async (req: Request, res: Response) => {
       });
     }
 
-    // Validate category if provided
-    if (category && !Object.values(ExpenseCategory).includes(category)) {
-      return res.status(400).json({
-        success: false,
-        message: "Danh mục chi phí không hợp lệ",
-      });
-    }
-
     // Validate expenseDate if provided
     if (expenseDate) {
       const expenseDateObj = new Date(expenseDate);
@@ -204,14 +177,13 @@ export const updateExpenseController = async (req: Request, res: Response) => {
       }
     }
 
-    const updateData: any = {};
-    if (buildingId !== undefined) updateData.buildingId = buildingId;
-    if (title !== undefined) updateData.title = title;
-    if (description !== undefined) updateData.description = description;
-    if (amount !== undefined) updateData.amount = parseFloat(amount);
-    if (category !== undefined) updateData.category = category;
-    if (expenseDate !== undefined)
-      updateData.expenseDate = new Date(expenseDate);
+    const updateData: any = {
+      buildingId: buildingId ? new Types.ObjectId(buildingId) : undefined,
+      title,
+      description,
+      amount: amount ? parseFloat(amount) : undefined,
+      expenseDate: expenseDate ? new Date(expenseDate) : undefined,
+    };
 
     const expense = await updateExpense(id, updateData);
 

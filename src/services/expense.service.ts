@@ -1,4 +1,4 @@
-import Expense, { ExpenseCategory } from "../models/Expense.model";
+import Expense from "../models/Expense.model";
 import { Types } from "mongoose";
 import {
   CreateExpenseInput,
@@ -11,7 +11,6 @@ export const createExpense = async (data: CreateExpenseInput) => {
     title: data.title,
     description: data.description || "",
     amount: data.amount,
-    category: data.category,
     expenseDate: data.expenseDate,
   };
 
@@ -24,24 +23,13 @@ export const createExpense = async (data: CreateExpenseInput) => {
 };
 
 export const getExpenses = async (params?: GetExpensesParams) => {
-  const {
-    buildingId,
-    category,
-    startDate,
-    endDate,
-    page = 1,
-    limit = 10,
-  } = params || {};
+  const { buildingId, startDate, endDate, page = 1, limit = 10 } = params || {};
 
   // Build query
   const query: any = {};
 
   if (buildingId) {
     query.buildingId = new Types.ObjectId(buildingId);
-  }
-
-  if (category) {
-    query.category = category;
   }
 
   if (startDate || endDate) {

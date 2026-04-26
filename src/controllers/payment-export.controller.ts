@@ -5,8 +5,6 @@ export const exportPaymentsController = async (req: Request, res: Response) => {
   try {
     const { invoiceIds } = req.body;
 
-    console.log("Received invoiceIds:", invoiceIds);
-
     // Validate input
     if (!invoiceIds || !Array.isArray(invoiceIds) || invoiceIds.length === 0) {
       return res.status(400).json({

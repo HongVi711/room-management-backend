@@ -1,5 +1,13 @@
 import { PaymentExportData } from "../services/payment-export.service";
+import * as fs from "fs";
+import * as path from "path";
 
+const getLogoBase64 = () => {
+  const filePath = path.resolve(process.cwd(), "src/templates/logo-base64.txt");
+  const base64 = fs.readFileSync(filePath, "utf-8");
+
+  return `data:image/png;base64,${base64}`;
+};
 export const generatePaymentPDFContent = (
   payment: PaymentExportData,
 ): string => {
@@ -9,6 +17,8 @@ export const generatePaymentPDFContent = (
       currency: "VND",
     }).format(amount);
   };
+
+  const logoBase64 = getLogoBase64();
 
   return `
 <!DOCTYPE html>
@@ -51,11 +61,15 @@ export const generatePaymentPDFContent = (
       <!-- Company Info -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-2 pb-2 border-b border-slate-200">
         <div>
-          <h1 class="text-3xl font-bold text-slate-900">QLNT</h1>
-          <p class="text-slate-600 mt-2">Website quản lý nhà trọ</p>
-          <p class="text-slate-600 text-sm">Điện thoại: 0901234567</p>
-          <p class="text-slate-600 text-sm">Email: info@gmail.com</p>
-        </div>
+  <img 
+      src="${logoBase64}" 
+    alt="QLNT Logo" 
+    class="h-12 mb-2"
+  />
+  <p class="text-slate-600 mt-2">Website quản lý nhà trọ</p>
+  <p class="text-slate-600 text-sm">Điện thoại: 0901234567</p>
+  <p class="text-slate-600 text-sm">Email: info@gmail.com</p>
+</div>
 
         <!-- Invoice Info -->
         <div class="text-right">

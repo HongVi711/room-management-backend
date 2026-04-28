@@ -1,4 +1,3 @@
-import PaymentTransaction from "../models/payment-transaction.model";
 import Room from "../models/room.model";
 import { Types } from "mongoose";
 const archiver = require("archiver");
@@ -169,11 +168,10 @@ const createPaymentZip = async (
         resolve(zipBuffer);
       });
 
-      // Generate PDFs and add to ZIP
       for (const payment of payments) {
         try {
           const pdfBuffer = await generatePaymentPDF(payment);
-          const fileName = `payment_${payment.paymentId}_${payment.tenantName.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
+          const fileName = `${payment.roomName}_${payment.tenantName.replace(/[^\p{L}\p{N}]/gu, "_")}.pdf`;
           archive.append(pdfBuffer, { name: fileName });
         } catch (pdfError) {
           console.error(

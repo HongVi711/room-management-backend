@@ -5,9 +5,6 @@ export const exportPaymentsController = async (req: Request, res: Response) => {
   try {
     const { invoiceIds } = req.body;
 
-    console.log("Received invoiceIds:", invoiceIds);
-
-    // Validate input
     if (!invoiceIds || !Array.isArray(invoiceIds) || invoiceIds.length === 0) {
       return res.status(400).json({
         success: false,
@@ -15,17 +12,14 @@ export const exportPaymentsController = async (req: Request, res: Response) => {
       });
     }
 
-    // Generate ZIP file with PDFs
     const zipBuffer = await exportInvoicesAsZip(invoiceIds);
 
-    // Set headers for ZIP download
     const fileName = `payments_export_${new Date().toISOString().split("T")[0]}.zip`;
 
     res.setHeader("Content-Type", "application/zip");
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
     res.setHeader("Content-Length", zipBuffer.length);
 
-    // Send ZIP file
     res.send(zipBuffer);
   } catch (error) {
     console.error("Error exporting payments:", error);

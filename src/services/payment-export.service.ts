@@ -1,4 +1,3 @@
-import PaymentTransaction from "../models/payment-transaction.model";
 import Room from "../models/room.model";
 import { Types } from "mongoose";
 const archiver = require("archiver");
@@ -14,13 +13,11 @@ export interface PaymentExportData {
   paymentDate: Date;
   paymentMethod?: string;
   notes?: string;
-  // Detailed fee breakdown
   rentAmount?: number;
   electricityCost?: number;
   waterCost?: number;
   internetFee?: number;
   parkingFee?: number;
-  serviceFee?: number;
   otherFee?: number;
   livingFee?: number;
   electricityPrevious?: number;
@@ -30,6 +27,9 @@ export interface PaymentExportData {
   waterPrevious?: number;
   waterCurrent?: number;
   waterUsage?: number;
+  isWaterPricePerPerson?: boolean;
+  memberCount?: number;
+  vehicleCount?: number;
   waterUnitPrice?: number;
   month?: number;
   year?: number;
@@ -37,16 +37,12 @@ export interface PaymentExportData {
 
 export const exportInvoicesAsZip = async (invoiceIds: string[]) => {
   try {
-    // 1. Validate invoice IDs
     const validInvoiceIds = invoiceIds.filter((id) =>
       Types.ObjectId.isValid(id),
     );
     if (validInvoiceIds.length === 0) {
       throw new Error("Không có invoice ID hợp lệ");
     }
-
-    // 2. Get invoices directly
-    console.log("Searching for invoices with IDs:", validInvoiceIds);
 
     const Invoice = require("../models/invoice.model").default;
     const invoices = await Invoice.find({ _id: { $in: validInvoiceIds } })
@@ -59,22 +55,18 @@ export const exportInvoicesAsZip = async (invoiceIds: string[]) => {
       })
       .lean();
 
-    console.log("Found invoices:", invoices.length);
-
     if (invoices.length === 0) {
       throw new Error(
         `Không tìm thấy invoices nào với IDs: ${validInvoiceIds.join(", ")}`,
       );
     }
 
-    // 3. Prepare export data from invoices
     const exportData: PaymentExportData[] = [];
 
     for (const invoice of invoices) {
-      const roomId = invoice.roomId as any;
+      const roomId = invoice.roomId;
       if (!roomId) continue;
 
-      // Get tenant info from room members
       let tenantName = "Unknown";
       if (invoice.tenantId) {
         const room = await Room.findById(roomId._id).select("members").lean();
@@ -91,20 +83,32 @@ export const exportInvoicesAsZip = async (invoiceIds: string[]) => {
 
       const invoiceData: PaymentExportData = {
         invoiceId: invoice._id.toString(),
-        paymentId: invoice._id.toString(), // Use invoice ID as payment ID
+        paymentId: invoice._id.toString(),
         tenantName,
         roomName: `${roomId.buildingId?.name || "Unknown"} - ${roomId.number || "Unknown"}`,
-        amount: invoice.totalAmount || 0,
+        amount:
+          (roomId.waterPricePerPerson > 0
+            ? ((invoice as any).waterCost ?? 0) * roomId.members.length
+            : ((invoice as any).waterCost ?? 0)) +
+          ((invoice as any).rentAmount ?? 0) +
+          ((invoice as any).electricityCost ?? 0) +
+          ((invoice as any).internetFee ?? 0) +
+          (((invoice as any).parkingFee ?? 0) *
+            roomId?.members?.filter((member: any) =>
+              member.licensePlate?.trim(),
+            )?.length || 0) +
+          ((invoice as any).otherFee ?? 0) +
+          ((invoice as any).livingFee ?? 0),
         paymentDate: invoice.createdAt || new Date(),
-        paymentMethod: invoice.paymentMethod || "Tiền mặt",
         notes: invoice.notes,
-        // Detailed fee breakdown from invoice
         rentAmount: (invoice as any).rentAmount,
         electricityCost: (invoice as any).electricityCost,
-        waterCost: (invoice as any).waterCost,
+        waterCost:
+          roomId.waterPricePerPerson > 0
+            ? ((invoice as any).waterCost ?? 0) * roomId.members.length
+            : ((invoice as any).waterCost ?? 0),
         internetFee: (invoice as any).internetFee,
         parkingFee: (invoice as any).parkingFee,
-        serviceFee: (invoice as any).serviceFee,
         otherFee: (invoice as any).otherFee,
         livingFee: (invoice as any).livingFee,
         electricityPrevious: (invoice as any).electricityPrevious,
@@ -114,7 +118,15 @@ export const exportInvoicesAsZip = async (invoiceIds: string[]) => {
         waterPrevious: (invoice as any).waterPrevious,
         waterCurrent: (invoice as any).waterCurrent,
         waterUsage: (invoice as any).waterUsage,
-        waterUnitPrice: (invoice as any).waterUnitPrice,
+        memberCount: roomId.members.length,
+        vehicleCount:
+          roomId?.members?.filter((member: any) => member.licensePlate?.trim())
+            ?.length || 0,
+        waterUnitPrice:
+          roomId.waterPricePerCubicMeter !== 0
+            ? roomId.waterPricePerCubicMeter
+            : (roomId.waterPricePerPerson ?? 0),
+        isWaterPricePerPerson: roomId.waterPricePerPerson > 0,
         month:
           (invoice as any).month ||
           new Date(invoice.createdAt || new Date()).getMonth() + 1,
@@ -126,7 +138,6 @@ export const exportInvoicesAsZip = async (invoiceIds: string[]) => {
       exportData.push(invoiceData);
     }
 
-    // 4. Generate export data
     const exportBuffer = await createPaymentZip(exportData);
 
     return exportBuffer;
@@ -157,11 +168,10 @@ const createPaymentZip = async (
         resolve(zipBuffer);
       });
 
-      // Generate PDFs and add to ZIP
       for (const payment of payments) {
         try {
           const pdfBuffer = await generatePaymentPDF(payment);
-          const fileName = `payment_${payment.paymentId}_${payment.tenantName.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
+          const fileName = `${payment.roomName}_${payment.tenantName.replace(/[^\p{L}\p{N}]/gu, "_")}.pdf`;
           archive.append(pdfBuffer, { name: fileName });
         } catch (pdfError) {
           console.error(

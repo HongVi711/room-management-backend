@@ -1,5 +1,13 @@
 import { PaymentExportData } from "../services/payment-export.service";
+import * as fs from "fs";
+import * as path from "path";
 
+const getLogoBase64 = () => {
+  const filePath = path.resolve(process.cwd(), "src/templates/logo-base64.txt");
+  const base64 = fs.readFileSync(filePath, "utf-8");
+
+  return `data:image/png;base64,${base64}`;
+};
 export const generatePaymentPDFContent = (
   payment: PaymentExportData,
 ): string => {
@@ -9,6 +17,8 @@ export const generatePaymentPDFContent = (
       currency: "VND",
     }).format(amount);
   };
+
+  const logoBase64 = getLogoBase64();
 
   return `
 <!DOCTYPE html>
@@ -51,11 +61,15 @@ export const generatePaymentPDFContent = (
       <!-- Company Info -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-2 pb-2 border-b border-slate-200">
         <div>
-          <h1 class="text-3xl font-bold text-slate-900">QLNT</h1>
-          <p class="text-slate-600 mt-2">Website quản lý nhà trọ</p>
-          <p class="text-slate-600 text-sm">Điện thoại: 0901234567</p>
-          <p class="text-slate-600 text-sm">Email: info@gmail.com</p>
-        </div>
+  <img 
+      src="${logoBase64}" 
+    alt="QLNT Logo" 
+    class="h-12 mb-2"
+  />
+  <p class="text-slate-600 mt-2">Website quản lý nhà trọ</p>
+  <p class="text-slate-600 text-sm">Điện thoại: 0901234567</p>
+  <p class="text-slate-600 text-sm">Email: info@gmail.com</p>
+</div>
 
         <!-- Invoice Info -->
         <div class="text-right">
@@ -74,10 +88,6 @@ export const generatePaymentPDFContent = (
             <div class="flex justify-between">
               <span class="text-slate-600">Người thuê:</span>
               <span class="font-semibold text-slate-900">${payment.tenantName}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-slate-600">Phương thức thanh toán:</span>
-              <span class="font-semibold text-slate-900">${payment.paymentMethod || "Tiền mặt"}</span>
             </div>
           </div>
         </div>
@@ -164,9 +174,9 @@ export const generatePaymentPDFContent = (
                 <p class="font-medium text-slate-900">Tiền nước</p>
                 <p class="text-sm text-slate-600">
                   ${
-                    payment.waterUsage && payment.waterUsage > 0
+                    payment.isWaterPricePerPerson === false
                       ? `CSĐ cũ: ${payment.waterPrevious || 0} | CSĐ mới: ${payment.waterCurrent || 0} | Sử dụng: ${payment.waterUsage} m³`
-                      : `Phí nước theo người`
+                      : `Tính theo người: ${formatCurrency(payment.waterUnitPrice || 0)}/người`
                   }
                 </p>
               </td>
@@ -174,16 +184,13 @@ export const generatePaymentPDFContent = (
                 <p class="font-medium text-slate-900">
                   ${formatCurrency(payment.waterUnitPrice || 0)}
                 </p>
-                <p class="text-xs text-slate-600">
-                  ${payment.waterUsage && payment.waterUsage > 0 ? "/m³" : "/người"}
-                </p>
               </td>
               <td class="text-right py-4 px-4">
                 <p class="font-medium text-slate-900">
                   ${
-                    payment.waterUsage && payment.waterUsage > 0
+                    payment.isWaterPricePerPerson === false
                       ? `${payment.waterUsage} m³`
-                      : `${1} người`
+                      : `${payment.memberCount ?? 0} người`
                   }
                 </p>
               </td>
@@ -212,7 +219,7 @@ export const generatePaymentPDFContent = (
                 </p>
               </td>
               <td class="text-right py-4 px-4">
-                <p class="font-medium text-slate-900">1</p>
+                <p class="font-medium text-slate-900">${payment.vehicleCount}</p>
               </td>
               <td class="text-right py-4 px-4">
                 <p class="font-semibold text-slate-900">
@@ -244,33 +251,6 @@ export const generatePaymentPDFContent = (
               <td class="text-right py-4 px-4">
                 <p class="font-semibold text-slate-900">
                   ${formatCurrency(payment.livingFee)}
-                </p>
-              </td>
-            </tr>
-            `
-                : ""
-            }
-
-            <!-- Phí dịch vụ -->
-            ${
-              payment.serviceFee && payment.serviceFee > 0
-                ? `
-            <tr class="border-b border-slate-200">
-              <td class="py-4 px-4">
-                <p class="font-medium text-slate-900">Phí dịch vụ</p>
-                <p class="text-sm text-slate-600">Phí dịch vụ quản lý</p>
-              </td>
-              <td class="text-right py-4 px-4">
-                <p class="font-medium text-slate-900">
-                  ${formatCurrency(payment.serviceFee)}
-                </p>
-              </td>
-              <td class="text-right py-4 px-4">
-                <p class="font-medium text-slate-900">1</p>
-              </td>
-              <td class="text-right py-4 px-4">
-                <p class="font-semibold text-slate-900">
-                  ${formatCurrency(payment.serviceFee)}
                 </p>
               </td>
             </tr>
@@ -312,158 +292,13 @@ export const generatePaymentPDFContent = (
               </td>
               <td class="text-right py-4 px-4" colspan="2"></td>
               <td class="text-right py-4 px-4">
-                <p class="font-bold text-slate-900">
+                <p class="font-bold text-xl text-red-500">
                   ${formatCurrency(payment.amount)}
                 </p>
               </td>
             </tr>
           </tbody>
         </table>
-      </div>
-
-      <!-- Mobile Version -->
-      <div class="md:hidden space-y-4 mb-4">
-        <!-- Tiền phòng -->
-        <div class="p-4 border rounded-lg bg-slate-50">
-          <div class="flex justify-between font-semibold">
-            <span class="text-sm">
-              Tiền thuê phòng ${new Date(payment.paymentDate).getMonth() + 1}/${new Date(payment.paymentDate).getFullYear()}
-            </span>
-            <span class="text-sm">${formatCurrency(payment.amount * 0.6)}</span>
-          </div>
-          <div class="text-xs text-slate-600 mt-1">
-            <p>${payment.roomName}</p>
-          </div>
-        </div>
-
-        <!-- Điện -->
-        <div class="p-4 border rounded-lg">
-          <div class="flex justify-between font-semibold">
-            <span class="text-sm">Tiền điện</span>
-            <span class="text-sm">${formatCurrency(150000)}</span>
-          </div>
-          <div class="text-xs text-slate-600 mt-1">
-            <p>50 kWh × ${formatCurrency(3000)}</p>
-            <p>CSĐ cũ: 100 → CSĐ mới: 150</p>
-            <p class="text-blue-600 font-medium">💧 Tính theo kWh</p>
-          </div>
-        </div>
-
-        <!-- Nước -->
-        ${
-          payment.waterCost && payment.waterCost > 0
-            ? `
-        <div class="p-4 border rounded-lg">
-          <div class="flex justify-between font-semibold">
-            <span class="text-sm">Tiền nước</span>
-            <span class="text-sm">${formatCurrency(payment.waterCost)}</span>
-          </div>
-          <div class="text-xs text-slate-600 mt-1">
-            ${
-              payment.waterUsage && payment.waterUsage > 0
-                ? `
-                <p>${payment.waterUsage} m³ × ${formatCurrency(payment.waterUnitPrice || 0)}/m³</p>
-                <p>CSĐ cũ: ${payment.waterPrevious || 0} → CSĐ mới: ${payment.waterCurrent || 0}</p>
-                <p class="text-blue-600 font-medium">💧 Tính theo m³</p>
-                <p class="text-gray-500 mt-1">Đơn giá: ${formatCurrency(payment.waterUnitPrice || 0)}/m³</p>
-              `
-                : `
-                <p>1 người × ${formatCurrency(payment.waterUnitPrice || 0)}/người</p>
-                <p class="text-blue-600 font-medium">👥 Tính theo người</p>
-                <p class="text-gray-500 mt-1">Đơn giá: ${formatCurrency(payment.waterUnitPrice || 0)}/người</p>
-              `
-            }
-          </div>
-        </div>
-        `
-            : ""
-        }
-
-        
-        <!-- Gửi xe -->
-        ${
-          payment.parkingFee && payment.parkingFee > 0
-            ? `
-        <div class="p-4 border rounded-lg">
-          <div class="flex justify-between font-semibold">
-            <span class="text-sm">Tiền gửi xe</span>
-            <span class="text-sm">${formatCurrency(payment.parkingFee)} / tháng</span>
-          </div>
-        </div>
-        `
-            : ""
-        }
-
-        <!-- Phí sinh hoạt -->
-        ${
-          payment.livingFee && payment.livingFee > 0
-            ? `
-        <div class="p-4 border rounded-lg">
-          <div class="flex justify-between font-semibold">
-            <span class="text-sm">Phí sinh hoạt</span>
-            <span class="text-sm">${formatCurrency(payment.livingFee)} / tháng</span>
-          </div>
-        </div>
-        `
-            : ""
-        }
-
-        <!-- Phí dịch vụ -->
-        ${
-          payment.serviceFee && payment.serviceFee > 0
-            ? `
-        <div class="p-4 border rounded-lg">
-          <div class="flex justify-between font-semibold">
-            <span class="text-sm">Tiền dịch vụ</span>
-            <span class="text-sm">${formatCurrency(payment.serviceFee)} / tháng</span>
-          </div>
-        </div>
-        `
-            : ""
-        }
-
-        <!-- Phí khác -->
-        ${
-          payment.otherFee && payment.otherFee > 0
-            ? `
-        <div class="p-4 border rounded-lg">
-          <div class="flex justify-between font-semibold">
-            <span class="text-sm">Tiền khác</span>
-            <span class="text-sm">${formatCurrency(payment.otherFee)}</span>
-          </div>
-        </div>
-        `
-            : ""
-        }
-      </div>
-
-      <!-- Totals -->
-      <div class="flex justify-end pb-8 border-b border-slate-200">
-        <div class="w-full md:w-64">
-          <div class="flex justify-between mb-2 pb-2 border-b border-slate-200">
-            <span class="text-slate-600 text-sm">Tổng tiền hóa đơn:</span>
-            <span class="font-semibold text-slate-900 text-sm">
-              ${formatCurrency(payment.amount)}
-            </span>
-          </div>
-          <div class="mt-2 flex justify-between">
-            <span class="text-lg font-bold text-slate-900">Thành tiền:</span>
-            <span class="text-xl font-bold text-red-500">
-              ${formatCurrency(payment.amount)}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer -->
-      <div class="text-center mt-8 text-slate-600 text-sm">
-        <p class="font-semibold text-slate-900 mb-2">HÓA ĐƠN TIỀN TRỌ</p>
-        <p>Đây là hóa đơn hợp lệ của hệ thống QLNT</p>
-        <p class="mt-2">Vui lòng thanh toán đúng hạn!</p>
-        <div class="mt-4 pt-4 border-t border-slate-200">
-          <p class="text-xs">QLNT - Hệ thống quản lý nhà trọ thông minh</p>
-          <p class="text-xs">Hotline: 0901234567 | Email: info@gmail.com</p>
-        </div>
       </div>
     </div>
   </div>

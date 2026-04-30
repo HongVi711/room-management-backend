@@ -259,7 +259,8 @@ export const getAllRooms = async (
 export const getRoomById = async (roomId: string): Promise<IRoom | null> => {
   const room = await Room.findOne({ _id: roomId, isDeleted: false })
     .populate("buildingId", "name")
-    .populate("members.userId", "name email");
+    .populate("members.userId", "name email")
+    .lean();
   return room;
 };
 
@@ -485,6 +486,7 @@ export const getRoomsWithMeterReadings = async (
           electricityReading: 1,
           waterReading: 1,
           createdAt: 1,
+          updatedAt: 1,
         },
       },
     },

@@ -1,12 +1,9 @@
 import { v2 as cloudinary } from "cloudinary";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary-v2";
 import multer from "multer";
 
-const {
-  CLOUDINARY_CLOUD_NAME,
-  CLOUDINARY_API_KEY,
-  CLOUDINARY_API_SECRET,
-} = process.env;
+const { CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET } =
+  process.env;
 
 if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
   throw new Error("Missing Cloudinary environment variables");
@@ -19,8 +16,8 @@ cloudinary.config({
 });
 
 const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: async (req, file) => {
+  cloudinary: cloudinary as any,
+  params: async (req: any, file: any) => {
     return {
       folder: "users_cccd", // Tên folder trên Cloudinary
       allowed_formats: ["jpg", "png", "jpeg", "webp"],

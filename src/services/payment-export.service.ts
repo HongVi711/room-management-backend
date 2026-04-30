@@ -201,7 +201,7 @@ const generatePaymentPDF = async (
 ): Promise<Buffer> => {
   const html = generatePaymentPDFContent(payment);
   const browser = await puppeteer.launch({
-    args: chromium.args,
+    args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox"],
     defaultViewport: chromium.defaultViewport,
     executablePath: await chromium.executablePath(),
     headless: chromium.headless,

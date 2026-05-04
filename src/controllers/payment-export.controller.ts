@@ -6,7 +6,7 @@ export const exportPaymentsController = async (req: Request, res: Response) => {
   try {
     const { invoiceIds } = req.body;
 
-    if (!invoiceIds || !Array.isArray(invoiceIds) || invoiceIds.length === 0) {
+    if (!Array.isArray(invoiceIds) || invoiceIds.length === 0) {
       return res.status(400).json({
         success: false,
         message: "Danh sách invoice IDs là bắt buộc",
@@ -14,10 +14,16 @@ export const exportPaymentsController = async (req: Request, res: Response) => {
     }
 
     const data = await buildExportData(invoiceIds);
+
     await streamZipToResponse(data, res);
   } catch (error) {
     console.error("Error exporting payments:", error);
-    res.status(500).json({
+
+    if (res.headersSent) {
+      return;
+    }
+
+    return res.status(500).json({
       success: false,
       message:
         error instanceof Error ? error.message : "Lỗi khi export payments",

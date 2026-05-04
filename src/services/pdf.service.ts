@@ -7,13 +7,15 @@ export const generatePaymentPDF = async (
   payment: PaymentExportData,
 ): Promise<Buffer> => {
   const page = await browser.newPage();
+  page.setDefaultTimeout(120000);
+  page.setDefaultNavigationTimeout(120000);
 
   try {
     const html = generatePaymentPDFContent(payment);
 
     await page.setContent(html, {
       waitUntil: "networkidle0",
-      timeout: 30000,
+      timeout: 0,
     });
 
     const pdf = await page.pdf({ format: "A4" });

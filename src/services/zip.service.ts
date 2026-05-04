@@ -18,41 +18,26 @@ export const streamZipToResponse = async (
 
   archive.pipe(res);
 
-  // const limit = pLimit(3);
+  const limit = pLimit(3);
 
-  // await Promise.all(
-  //   payments.map((payment) =>
-  //     limit(async () => {
-  //       try {
-  //         const pdf = await generatePaymentPDF(browser, payment);
+  await Promise.all(
+    payments.map((payment) =>
+      limit(async () => {
+        try {
+          const pdf = await generatePaymentPDF(browser, payment);
 
-  //         const safeTenant = payment.tenantName.replace(/[^\p{L}\p{N}]/gu, "_");
-  //         const safeRoom = payment.roomName.replace(/[^\p{L}\p{N}]/gu, "_");
+          const safeTenant = payment.tenantName.replace(/[^\p{L}\p{N}]/gu, "_");
+          const safeRoom = payment.roomName.replace(/[^\p{L}\p{N}]/gu, "_");
 
-  //         const fileName = `${safeRoom}_${safeTenant}.pdf`;
+          const fileName = `${safeRoom}_${safeTenant}.pdf`;
 
-  //         archive.append(pdf, { name: fileName });
-  //       } catch (err) {
-  //         console.error("PDF error:", err);
-  //       }
-  //     }),
-  //   ),
-  // );
-
-  for (const payment of payments) {
-    try {
-      const pdf = await generatePaymentPDF(browser, payment);
-
-      const safeTenant = payment.tenantName.replace(/[^\p{L}\p{N}]/gu, "_");
-      const safeRoom = payment.roomName.replace(/[^\p{L}\p{N}]/gu, "_");
-
-      const fileName = `${safeRoom}_${safeTenant}.pdf`;
-
-      archive.append(pdf, { name: fileName });
-    } catch (err) {
-      console.error("PDF error:", err);
-    }
-  }
+          archive.append(pdf, { name: fileName });
+        } catch (err) {
+          console.error("PDF error:", err);
+        }
+      }),
+    ),
+  );
 
   await archive.finalize();
 };

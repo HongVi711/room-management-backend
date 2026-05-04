@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import { exportInvoicesAsZip } from "../services/payment-export.service";
+import { buildExportData } from "../services/payment-export.service";
+import { streamZipToResponse } from "../services/zip.service";
 
 export const exportPaymentsController = async (req: Request, res: Response) => {
   try {
@@ -12,15 +13,8 @@ export const exportPaymentsController = async (req: Request, res: Response) => {
       });
     }
 
-    const zipBuffer = await exportInvoicesAsZip(invoiceIds);
-
-    const fileName = `payments_export_${new Date().toISOString().split("T")[0]}.zip`;
-
-    res.setHeader("Content-Type", "application/zip");
-    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
-    res.setHeader("Content-Length", zipBuffer.length);
-
-    res.send(zipBuffer);
+    const data = await buildExportData(invoiceIds);
+    await streamZipToResponse(data, res);
   } catch (error) {
     console.error("Error exporting payments:", error);
     res.status(500).json({

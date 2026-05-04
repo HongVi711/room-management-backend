@@ -223,7 +223,7 @@ export const generatePaymentPDFContent = (
               </td>
               <td class="text-right py-4 px-4">
                 <p class="font-semibold text-slate-900">
-                  ${formatCurrency(payment.parkingFee)}
+                  ${formatCurrency(payment.parkingFee * (payment.vehicleCount ?? 0))}
                 </p>
               </td>
             </tr>

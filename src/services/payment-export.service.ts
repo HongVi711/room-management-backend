@@ -98,22 +98,13 @@ export const buildExportData = async (invoiceIds: string[]) => {
     const vehicleCount =
       members.filter((m: any) => m.licensePlate?.trim()).length || 0;
 
-    const amount =
-      waterCost +
-      ((invoice as any).rentAmount ?? 0) +
-      ((invoice as any).electricityCost ?? 0) +
-      ((invoice as any).internetFee ?? 0) +
-      ((invoice as any).parkingFee ?? 0) * vehicleCount +
-      ((invoice as any).otherFee ?? 0) +
-      ((invoice as any).livingFee ?? 0);
-
     result.push({
       invoiceId: invoice._id.toString(),
       paymentId: invoice._id.toString(),
       tenantName,
       roomName: `${roomId.buildingId?.name || "Unknown"} - ${room?.number || "Unknown"}`,
 
-      amount,
+      amount: (invoice as any).totalAmount,
       paymentDate: invoice.createdAt || new Date(),
       notes: invoice.notes,
 
@@ -122,7 +113,7 @@ export const buildExportData = async (invoiceIds: string[]) => {
       waterCost,
 
       internetFee: (invoice as any).internetFee,
-      parkingFee: (invoice as any).parkingFee,
+      parkingFee: (invoice as any).parkingFee / (vehicleCount ?? 1),
       otherFee: (invoice as any).otherFee,
       livingFee: (invoice as any).livingFee,
 

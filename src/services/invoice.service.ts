@@ -411,28 +411,47 @@ export const bulkCreateInvoices = async (
         continue;
       }
 
-      // Tính costs (KHÔNG tin FE)
-      const electricityCost =
-        electricityUsage * (room.electricityUnitPrice || 0);
-
-      let waterCost = 0;
       const waterPricePerPerson = room.waterPricePerPerson || 0;
       const waterPricePerCubicMeter = room.waterPricePerCubicMeter || 0;
 
+      const memberCount = room.members?.length || 0;
+
+      const vehicleCount =
+        room.members?.filter((m) => m.licensePlate?.trim()?.length > 0)
+          .length || 0;
+
+      // Electricity
+      const electricityCost =
+        electricityUsage * (room.electricityUnitPrice || 0);
+
+      // Water (THEO FE)
+      let waterCost = 0;
+
       if (waterPricePerPerson > 0) {
-        waterCost = waterPricePerPerson;
+        waterCost = waterPricePerPerson * memberCount;
       } else if (waterPricePerCubicMeter > 0) {
         waterCost = waterUsage * waterPricePerCubicMeter;
       }
 
-      // Tổng các phí
+      // Fees
       const rentAmount = room.price || 0;
+
+      // THEO FE → per person
       const livingFee = room.livingFee || 0;
-      const parkingFee = room.parkingFee || 0;
+
+      // THEO FE → per vehicle
+      const parkingFee = (room.parkingFee || 0) * vehicleCount;
+
       const otherFee = 0;
 
+      // ✅ TOTAL FINAL (MATCH FE)
       const totalAmount =
-        waterCost + rentAmount + livingFee + parkingFee + otherFee;
+        electricityCost +
+        waterCost +
+        rentAmount +
+        livingFee +
+        parkingFee +
+        otherFee;
 
       const representative = room.members.find(
         (member) => member.isRepresentative,

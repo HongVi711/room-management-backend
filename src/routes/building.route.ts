@@ -17,28 +17,28 @@ const router = Router();
 router.post(
   "/",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin]),
   validateDto(CreateBuildingDto),
   createBuildingController,
 );
 router.get(
   "/:id",
   authMiddleware,
-  requireRole([ROLE.OWNER, ROLE.TENANT]),
+  requireRole([ROLE.admin, ROLE.noRole]),
   getBuildingController,
 );
 
 router.get(
   "/",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin]),
   getAllBuildingsController,
 );
 
 router.put(
   "/:id",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin]),
   validateDto(UpdateBuildingDto),
   updateBuildingController,
 );
@@ -46,7 +46,7 @@ router.put(
 router.delete(
   "/:id",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin]),
   deleteBuildingController,
 );
 

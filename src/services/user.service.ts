@@ -25,7 +25,7 @@ export const UserService = async (data: CreateUserInput) => {
   const userData: any = {
     ...data,
     password: hashedPassword,
-    role: data.role ?? ROLE.TENANT,
+    role: data.role ?? ROLE.noRole,
   };
 
   if (cccdFront && cccdBack) {
@@ -70,6 +70,7 @@ export const getAllUsers = async (
 
   const result = await PaginationUtil.paginate(User, query, paginationParams, {
     select: "-password",
+    populate: "assignBuilding",
   });
 
   return {

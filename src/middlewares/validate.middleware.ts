@@ -22,9 +22,11 @@ export const validateDto = (DtoClass: any) => {
     if (errors.length > 0) {
       await cleanupFiles(req.files);
 
-      const messages = errors.map((err) => Object.values(err.constraints || {})).flat();
+      const messages = errors
+        .map((err) => Object.values(err.constraints || {}))
+        .flat();
       return res.status(400).json({
-        message: "Validation Error",
+        message: "Có lỗi xảy ra trong quá trình xử lý",
         errors: messages,
       });
     }

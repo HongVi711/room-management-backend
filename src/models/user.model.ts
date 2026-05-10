@@ -1,4 +1,4 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, model, Document, Types } from "mongoose";
 import { ROLE } from "../utils/app.constants";
 
 export interface IUser extends Document {
@@ -12,6 +12,7 @@ export interface IUser extends Document {
     front: { url: string; publicId: string };
     back: { url: string; publicId: string };
   };
+  assignBuilding: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,8 +24,8 @@ const userSchema = new Schema<IUser>(
     password: { type: String, required: true },
     role: {
       type: Number,
-      enum: [ROLE.TENANT, ROLE.OWNER],
-      default: ROLE.TENANT,
+      enum: ROLE,
+      default: ROLE.noRole,
     },
     phone: { type: String, default: "" },
     licensePlate: { type: String, default: "" },
@@ -38,6 +39,12 @@ const userSchema = new Schema<IUser>(
         publicId: { type: String, default: "" },
       },
     },
+    assignBuilding: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Building",
+      },
+    ],
   },
   { timestamps: true },
 );

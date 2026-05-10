@@ -16,7 +16,7 @@ export const createMeterReadingController = async (
   try {
     const currentUser = (req as any).user;
 
-    if (currentUser.role !== ROLE.OWNER) {
+    if (currentUser.role !== ROLE.admin) {
       return res.status(403).json({
         message: "Chỉ chủ nhà mới có thể thêm chỉ số điện nước",
       });
@@ -43,7 +43,7 @@ export const getMeterReadingsController = async (
     const { roomId, month, year, page, limit } = req.query;
     const currentUser = (req as any).user;
 
-    if (currentUser.role !== ROLE.OWNER) {
+    if (currentUser.role !== ROLE.admin) {
       return res.status(403).json({
         message: "Chỉ chủ nhà mới có thể xem chỉ số điện nước",
       });
@@ -82,7 +82,7 @@ export const getMeterReadingByIdController = async (
     const { id } = req.params;
     const currentUser = (req as any).user;
 
-    if (currentUser.role !== ROLE.OWNER) {
+    if (currentUser.role !== ROLE.admin) {
       return res.status(403).json({
         message: "Chỉ chủ nhà mới có thể xem chi tiết chỉ số điện nước",
       });
@@ -121,7 +121,7 @@ export const updateMeterReadingController = async (
     const { id } = req.params;
     const currentUser = (req as any).user;
 
-    if (currentUser.role !== ROLE.OWNER) {
+    if (currentUser.role !== ROLE.admin) {
       return res.status(403).json({
         message: "Chỉ chủ nhà mới có thể cập nhật chỉ số điện nước",
       });
@@ -160,7 +160,7 @@ export const deleteMeterReadingController = async (
     const { id } = req.params;
     const currentUser = (req as any).user;
 
-    if (currentUser.role !== ROLE.OWNER) {
+    if (currentUser.role !== ROLE.admin) {
       return res.status(403).json({
         message: "Chỉ chủ nhà mới có thể xóa chỉ số điện nước",
       });
@@ -197,7 +197,7 @@ export const bulkUpsertMeterReadingsController = async (
   try {
     const currentUser = (req as any).user;
 
-    if (currentUser.role !== ROLE.OWNER) {
+    if (currentUser.role !== ROLE.admin) {
       return res.status(403).json({
         message:
           "Chỉ chủ nhà mới có thể thêm/cập nhật chỉ số điện nước hàng loạt",

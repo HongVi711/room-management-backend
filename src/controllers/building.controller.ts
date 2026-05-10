@@ -52,7 +52,7 @@ export const getBuildingController = async (req: Request, res: Response) => {
     }
 
     // Check quyền truy cập
-    if (currentUser.role === ROLE.TENANT) {
+    if (currentUser.role === ROLE.noRole) {
       return res.status(403).json({
         message: "Tenants cannot view building details",
       });
@@ -70,7 +70,10 @@ export const getBuildingController = async (req: Request, res: Response) => {
   }
 };
 
-export const getAllBuildingsController = async (req: Request, res: Response) => {
+export const getAllBuildingsController = async (
+  req: Request,
+  res: Response,
+) => {
   try {
     const { name, address, district, city, page, limit } = req.query;
 

@@ -19,14 +19,14 @@ const router = Router();
 router.get(
   "/",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin]),
   getAllRoomsController,
 );
 
 router.put(
   "/:id",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin]),
   validateDto(UpdateRoomDto),
   updateRoomController,
 );
@@ -41,28 +41,28 @@ router.put(
 router.get(
   "/occupied",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin]),
   getOccupiedRoomsController,
 );
 
 router.get(
   "/meter-reading",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin]),
   getRoomsWithMeterReadingsController,
 );
 
 router.get(
   "/:id",
   authMiddleware,
-  requireRole([ROLE.OWNER, ROLE.TENANT]),
+  requireRole([ROLE.admin, ROLE.noRole]),
   getRoomByIdController,
 );
 
 router.get(
   "/tenant/:userId",
   authMiddleware,
-  requireRole([ROLE.OWNER, ROLE.TENANT]),
+  requireRole([ROLE.admin, ROLE.noRole]),
   getRoomByUserIdController,
 );
 

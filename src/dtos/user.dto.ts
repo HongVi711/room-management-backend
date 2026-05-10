@@ -32,7 +32,7 @@ export class CreateUserDto {
   phone!: string;
 
   @IsOptional()
-  @Type(() => Number) // Quan trọng: Convert string '1' -> number 1
+  @Type(() => Number)
   @IsEnum(ROLE)
   role?: ROLE;
 

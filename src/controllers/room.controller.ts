@@ -57,7 +57,7 @@ export const updateRoomController = async (req: Request, res: Response) => {
       });
     }
 
-    if (currentUser.role === ROLE.TENANT) {
+    if (currentUser.role === ROLE.noRole) {
       return res.status(403).json({
         message: "Tenants cannot update rooms",
       });
@@ -210,7 +210,7 @@ export const getRoomsWithMeterReadingsController = async (
     const { month, year, buildingId, buildingName, roomNumber, page, limit } =
       req.query;
 
-    if (currentUser.role !== ROLE.OWNER) {
+    if (currentUser.role !== ROLE.admin) {
       return res.status(403).json({
         message:
           "Chỉ chủ nhà mới có thể xem danh sách phòng với chỉ số điện nước",

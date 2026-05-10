@@ -18,7 +18,7 @@ const router = Router();
 router.post(
   "/confirm",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin]),
   confirmPaymentController,
 );
 
@@ -30,7 +30,7 @@ router.post(
 router.get(
   "/revenue/month",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin]),
   getRevenueByMonthController,
 );
 
@@ -42,7 +42,7 @@ router.get(
 router.get(
   "/revenue/building",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin]),
   getRevenueByBuildingController,
 );
 

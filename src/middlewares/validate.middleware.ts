@@ -15,6 +15,12 @@ const cleanupFiles = async (files: any) => {
 
 export const validateDto = (DtoClass: any) => {
   return async (req: Request, res: Response, next: NextFunction) => {
+    if (
+      req.body.assignBuilding === undefined ||
+      req.body.assignBuilding === ""
+    ) {
+      req.body.assignBuilding = [];
+    }
     const dtoObj = plainToInstance(DtoClass, req.body);
 
     const errors = await validate(dtoObj);

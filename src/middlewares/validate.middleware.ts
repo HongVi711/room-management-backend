@@ -20,7 +20,10 @@ export const validateDto = (DtoClass: any) => {
       req.body.assignBuilding === ""
     ) {
       req.body.assignBuilding = [];
+    } else if (!Array.isArray(req.body.assignBuilding)) {
+      req.body.assignBuilding = [req.body.assignBuilding];
     }
+
     const dtoObj = plainToInstance(DtoClass, req.body);
 
     const errors = await validate(dtoObj);

@@ -92,7 +92,8 @@ export const updateUser = async (
   userId: string,
   updateData: Partial<CreateUserInput>,
 ) => {
-  const user = await User.findById(userId);
+  const user = await getUserById(userId);
+
   if (!user) {
     throw new Error("User không tồn tại");
   }

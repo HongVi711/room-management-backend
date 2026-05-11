@@ -54,7 +54,7 @@ router.get(
 router.put(
   "/:id",
   authMiddleware,
-  requireRole([ROLE.admin, ROLE.noRole]),
+  requireRole([ROLE.admin]),
   uploadFields,
   validateDto(UpdateUserDto),
   updateUserController,

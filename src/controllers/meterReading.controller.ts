@@ -8,6 +8,7 @@ import {
   bulkUpsertMeterReadings,
 } from "../services/meterReading.service";
 import { ROLE } from "../utils/app.constants";
+import { getUserById } from "../services/user.service";
 
 export const createMeterReadingController = async (
   req: Request,
@@ -41,18 +42,28 @@ export const getMeterReadingsController = async (
 ) => {
   try {
     const { roomId, month, year, page, limit } = req.query;
-    const currentUser = (req as any).user;
+    const user = req.user;
 
-    if (currentUser.role !== ROLE.admin) {
+    if (user.role === ROLE.noRole) {
       return res.status(403).json({
         message: "Chỉ chủ nhà mới có thể xem chỉ số điện nước",
       });
     }
 
+    const currentUser = await getUserById(user.id);
+
     const pageNum = page ? parseInt(page as string, 10) : 1;
     const limitNum = limit ? parseInt(limit as string, 10) : 10;
     const monthNum = month ? parseInt(month as string, 10) : undefined;
     const yearNum = year ? parseInt(year as string, 10) : undefined;
+
+    let assignedBuildingIds: string[] | undefined;
+
+    // manager
+    if (currentUser.role === ROLE.manager) {
+      assignedBuildingIds =
+        currentUser.assignBuilding?.map((id: any) => id.toString()) || [];
+    }
 
     const result = await getMeterReadings(
       roomId as string,
@@ -60,6 +71,7 @@ export const getMeterReadingsController = async (
       yearNum,
       pageNum,
       limitNum,
+      assignedBuildingIds,
     );
 
     return res.status(200).json({

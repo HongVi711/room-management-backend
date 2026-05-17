@@ -47,7 +47,7 @@ router.get(
 router.get(
   "/:id",
   authMiddleware,
-  requireRole([ROLE.admin, ROLE.noRole]),
+  requireRole([ROLE.admin, ROLE.manager]),
   getUser,
 );
 

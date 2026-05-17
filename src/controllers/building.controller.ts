@@ -6,6 +6,7 @@ import {
   getAllBuildings,
   updateBuilding,
   deleteBuilding,
+  SearchBuildings,
 } from "../services/building.service";
 import { ROLE } from "../utils/app.constants";
 import { IBuilding } from "../models/building.model";
@@ -118,6 +119,25 @@ export const getAllBuildingsController = async (
     return res.status(200).json({
       message: "All buildings retrieved successfully",
       data: result.buildings,
+      pagination: result.pagination,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+export const getSearchAllBuildingsByRoleController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const result = await SearchBuildings(req.body);
+
+    return res.status(200).json({
+      message: "All buildings retrieved successfully",
+      data: result.data,
       pagination: result.pagination,
     });
   } catch (error: any) {

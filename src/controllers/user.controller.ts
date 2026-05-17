@@ -50,7 +50,7 @@ export const getUser = async (req: Request, res: Response) => {
       });
     }
 
-    if (currentUser.role === ROLE.noRole && currentUser.id !== id) {
+    if (currentUser.role === ROLE.manager && currentUser.id !== id) {
       return res.status(403).json({
         message: "You can only view your own profile",
       });

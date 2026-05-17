@@ -221,7 +221,7 @@ export const deleteRoom = async (
 export const getAllRooms = async (
   searchParams?: {
     number?: string;
-    buildingId?: string;
+    buildingId?: string | string[];
     floor?: number;
     status?: ROOMSTATUS;
   },
@@ -236,7 +236,15 @@ export const getAllRooms = async (
   }
 
   if (searchParams?.buildingId) {
-    query.buildingId = new Types.ObjectId(searchParams.buildingId);
+    // array => $in
+    if (Array.isArray(searchParams.buildingId)) {
+      query.buildingId = {
+        $in: searchParams.buildingId.map((id) => new Types.ObjectId(id)),
+      };
+    } else {
+      // single
+      query.buildingId = new Types.ObjectId(searchParams.buildingId);
+    }
   }
 
   if (searchParams?.floor !== undefined) {
@@ -348,6 +356,176 @@ export const getRoomByUserId = (userId: string) => {
     .populate("members.userId", "name email");
 };
 
+// export const getRoomsWithMeterReadings = async (
+//   month: number,
+//   year: number,
+//   searchParams?: {
+//     buildingId?: string;
+//     roomNumber?: string;
+//     buildingName?: string;
+//   },
+//   pagination?: {
+//     page?: number;
+//     limit?: number;
+//   },
+// ) => {
+//   const page = Math.max(1, pagination?.page || 1);
+//   const limit = Math.min(100, Math.max(1, pagination?.limit || 10));
+//   const skip = (page - 1) * limit;
+
+//   let matchStage: any = {
+//     isDeleted: false,
+//   };
+
+//   if (searchParams?.buildingId) {
+//     matchStage.buildingId = new Types.ObjectId(searchParams.buildingId);
+//   }
+
+//   if (searchParams?.roomNumber) {
+//     matchStage.number = { $regex: searchParams.roomNumber, $options: "i" };
+//   }
+
+//   const rooms = await Room.aggregate([
+//     {
+//       $match: matchStage,
+//     },
+//     {
+//       $lookup: {
+//         from: "buildings",
+//         localField: "buildingId",
+//         foreignField: "_id",
+//         as: "building",
+//       },
+//     },
+//     {
+//       $unwind: {
+//         path: "$building",
+//         preserveNullAndEmptyArrays: true,
+//       },
+//     },
+//     ...(searchParams?.buildingName
+//       ? [
+//           {
+//             $match: {
+//               "building.name": {
+//                 $regex: searchParams.buildingName,
+//                 $options: "i", // không phân biệt hoa thường
+//               },
+//             },
+//           },
+//         ]
+//       : []),
+//     {
+//       $lookup: {
+//         from: "users",
+//         localField: "members.userId",
+//         foreignField: "_id",
+//         as: "members",
+//       },
+//     },
+//     {
+//       $unwind: {
+//         path: "$members",
+//         preserveNullAndEmptyArrays: true,
+//       },
+//     },
+//     {
+//       $lookup: {
+//         from: "meterreadings",
+//         let: {
+//           roomId: "$_id",
+//         },
+//         pipeline: [
+//           {
+//             $match: {
+//               $expr: {
+//                 $and: [
+//                   { $eq: ["$roomId", "$$roomId"] },
+//                   { $eq: ["$month", month] },
+//                   { $eq: ["$year", year] },
+//                 ],
+//               },
+//             },
+//           },
+//         ],
+//         as: "meterReading",
+//       },
+//     },
+//     {
+//       $unwind: {
+//         path: "$meterReading",
+//         preserveNullAndEmptyArrays: true,
+//       },
+//     },
+//     {
+//       $project: {
+//         _id: 1,
+//         number: 1,
+//         area: 1,
+//         price: 1,
+//         electricityUnitPrice: 1,
+//         waterPricePerPerson: 1,
+//         waterPricePerCubicMeter: 1,
+//         parkingFee: 1,
+//         livingFee: 1,
+//         status: 1,
+//         description: 1,
+//         createdAt: 1,
+//         updatedAt: 1,
+//         building: {
+//           _id: 1,
+//           name: 1,
+//           address: 1,
+//         },
+//         members: {
+//           userId: 1,
+//           name: 1,
+//           email: 1,
+//           phone: 1,
+//           moveInDate: 1,
+//           contractEndDate: 1,
+//           isRepresentative: 1,
+//           emergencyContact: 1,
+//         },
+//         meterReading: {
+//           _id: 1,
+//           month: 1,
+//           year: 1,
+//           electricityReading: 1,
+//           waterReading: 1,
+//           createdAt: 1,
+//           updatedAt: 1,
+//         },
+//       },
+//     },
+//     {
+//       $sort: { "building.name": 1, number: 1 },
+//     },
+//     {
+//       $facet: {
+//         data: [{ $skip: skip }, { $limit: limit }],
+//         totalCount: [{ $count: "count" }],
+//       },
+//     },
+//   ]);
+
+//   const result = rooms[0];
+//   const total = result.totalCount[0]?.count || 0;
+//   const totalPages = Math.ceil(total / limit);
+
+//   return {
+//     rooms: result.data,
+//     pagination: {
+//       page,
+//       limit,
+//       total,
+//       totalPages,
+//       hasNext: page < totalPages,
+//       hasPrev: page > 1,
+//     },
+//   };
+// };
+
 export const getRoomsWithMeterReadings = async (
   month: number,
   year: number,
@@ -355,6 +533,7 @@ export const getRoomsWithMeterReadings = async (
     buildingId?: string;
     roomNumber?: string;
     buildingName?: string;
+    assignedBuildingIds?: string[];
   },
   pagination?: {
     page?: number;
@@ -362,25 +541,54 @@ export const getRoomsWithMeterReadings = async (
   },
 ) => {
   const page = Math.max(1, pagination?.page || 1);
+
   const limit = Math.min(100, Math.max(1, pagination?.limit || 10));
+
   const skip = (page - 1) * limit;
 
   let matchStage: any = {
     isDeleted: false,
   };
 
+  // admin filter building cụ thể
   if (searchParams?.buildingId) {
     matchStage.buildingId = new Types.ObjectId(searchParams.buildingId);
   }
 
+  // manager chỉ xem building được assign
+  if (searchParams?.assignedBuildingIds?.length) {
+    matchStage.buildingId = {
+      $in: searchParams.assignedBuildingIds.map((id) => new Types.ObjectId(id)),
+    };
+
+    // manager truyền buildingId cụ thể
+    if (searchParams?.buildingId) {
+      const isAllowed = searchParams.assignedBuildingIds.includes(
+        searchParams.buildingId,
+      );
+
+      if (!isAllowed) {
+        throw new Error("FORBIDDEN_BUILDING");
+      }
+
+      matchStage.buildingId = new Types.ObjectId(searchParams.buildingId);
+    }
+  }
+
+  // search room number
   if (searchParams?.roomNumber) {
-    matchStage.number = { $regex: searchParams.roomNumber, $options: "i" };
+    matchStage.number = {
+      $regex: searchParams.roomNumber,
+      $options: "i",
+    };
   }
 
   const rooms = await Room.aggregate([
     {
       $match: matchStage,
     },
+
+    // building
     {
       $lookup: {
         from: "buildings",
@@ -389,24 +597,29 @@ export const getRoomsWithMeterReadings = async (
         as: "building",
       },
     },
+
     {
       $unwind: {
         path: "$building",
         preserveNullAndEmptyArrays: true,
       },
     },
+
+    // search building name
     ...(searchParams?.buildingName
       ? [
           {
             $match: {
               "building.name": {
                 $regex: searchParams.buildingName,
-                $options: "i", // không phân biệt hoa thường
+                $options: "i",
               },
             },
           },
         ]
       : []),
+
+    // members
     {
       $lookup: {
         from: "users",
@@ -415,12 +628,15 @@ export const getRoomsWithMeterReadings = async (
         as: "members",
       },
     },
+
     {
       $unwind: {
         path: "$members",
         preserveNullAndEmptyArrays: true,
       },
     },
+
+    // meter readings
     {
       $lookup: {
         from: "meterreadings",
@@ -432,9 +648,15 @@ export const getRoomsWithMeterReadings = async (
             $match: {
               $expr: {
                 $and: [
-                  { $eq: ["$roomId", "$$roomId"] },
-                  { $eq: ["$month", month] },
-                  { $eq: ["$year", year] },
+                  {
+                    $eq: ["$roomId", "$$roomId"],
+                  },
+                  {
+                    $eq: ["$month", month],
+                  },
+                  {
+                    $eq: ["$year", year],
+                  },
                 ],
               },
             },
@@ -443,12 +665,15 @@ export const getRoomsWithMeterReadings = async (
         as: "meterReading",
       },
     },
+
     {
       $unwind: {
         path: "$meterReading",
         preserveNullAndEmptyArrays: true,
       },
     },
+
+    // project
     {
       $project: {
         _id: 1,
@@ -464,49 +689,61 @@ export const getRoomsWithMeterReadings = async (
         description: 1,
         createdAt: 1,
         updatedAt: 1,
+
         building: {
-          _id: 1,
-          name: 1,
-          address: 1,
+          _id: "$building._id",
+          name: "$building.name",
+          address: "$building.address",
         },
+
         members: {
-          userId: 1,
-          name: 1,
-          email: 1,
-          phone: 1,
-          moveInDate: 1,
-          contractEndDate: 1,
-          isRepresentative: 1,
-          emergencyContact: 1,
+          userId: "$members._id",
+          name: "$members.fullName",
+          email: "$members.email",
+          phone: "$members.phone",
         },
+
         meterReading: {
-          _id: 1,
-          month: 1,
-          year: 1,
-          electricityReading: 1,
-          waterReading: 1,
-          createdAt: 1,
-          updatedAt: 1,
+          _id: "$meterReading._id",
+          month: "$meterReading.month",
+          year: "$meterReading.year",
+          electricityReading: "$meterReading.electricityReading",
+          waterReading: "$meterReading.waterReading",
+          createdAt: "$meterReading.createdAt",
+          updatedAt: "$meterReading.updatedAt",
         },
       },
     },
+
     {
-      $sort: { "building.name": 1, number: 1 },
+      $sort: {
+        "building.name": 1,
+        number: 1,
+      },
     },
+
     {
       $facet: {
         data: [{ $skip: skip }, { $limit: limit }],
-        totalCount: [{ $count: "count" }],
+
+        totalCount: [
+          {
+            $count: "count",
+          },
+        ],
       },
     },
   ]);
 
   const result = rooms[0];
-  const total = result.totalCount[0]?.count || 0;
+
+  const total = result?.totalCount?.[0]?.count || 0;
+
   const totalPages = Math.ceil(total / limit);
 
   return {
-    rooms: result.data,
+    rooms: result?.data || [],
+
     pagination: {
       page,
       limit,

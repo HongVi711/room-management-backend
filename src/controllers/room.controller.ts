@@ -1,38 +1,121 @@
 import { Request, Response } from "express";
 import {
   updateRoom,
-  // deleteRoom,
-  // assignTenant,
   getAllRooms,
   getRoomById,
   getOccupiedRooms,
   getRoomByUserId,
   getRoomsWithMeterReadings,
+  deleteRoom,
 } from "../services/room.service";
 import { ROLE, ROOMSTATUS } from "../utils/app.constants";
 import { PaginationUtil } from "../utils/pagination.util";
+import userModel from "../models/user.model";
+import { getUserById } from "../services/user.service";
+
+// export const getAllRoomsController = async (req: Request, res: Response) => {
+//   try {
+//     const { number, buildingId, floor, status } = req.query;
+//     const searchParams: any = {};
+//     if (number) searchParams.number = number as string;
+
+//     if (buildingId) {
+//       if (typeof buildingId === "object") {
+//         console.error("buildingId is object:", buildingId);
+//         return res.status(400).json({
+//           message: "buildingId must be a string, not an object",
+//         });
+//       }
+//       searchParams.buildingId = buildingId as string;
+//     }
+
+//     if (floor) searchParams.floor = parseInt(floor as string);
+//     if (status) searchParams.status = status as ROOMSTATUS;
+
+//     const pagination = PaginationUtil.parsePaginationParams(req.query);
+//     const result = await getAllRooms(searchParams, pagination);
+
+//     return res.status(200).json({
+//       rooms: result.data,
+//       pagination: result.pagination,
+//     });
+//   } catch (error: any) {
+//     return res.status(400).json({
+//       message: error.message,
+//     });
+//   }
+// };
 
 export const getAllRoomsController = async (req: Request, res: Response) => {
   try {
     const { number, buildingId, floor, status } = req.query;
-    const searchParams: any = {};
-    if (number) searchParams.number = number as string;
 
-    // Handle buildingId - convert object to string if needed
-    if (buildingId) {
-      if (typeof buildingId === "object") {
-        console.error("buildingId is object:", buildingId);
-        return res.status(400).json({
-          message: "buildingId must be a string, not an object",
-        });
-      }
-      searchParams.buildingId = buildingId as string;
+    const searchParams: any = {};
+
+    if (number) {
+      searchParams.number = number as string;
     }
 
-    if (floor) searchParams.floor = parseInt(floor as string);
-    if (status) searchParams.status = status as ROOMSTATUS;
+    if (floor) {
+      searchParams.floor = parseInt(floor as string);
+    }
+
+    if (status) {
+      searchParams.status = status as ROOMSTATUS;
+    }
+
+    // ===== BUSINESS ROLE = 2 =====
+    const currentUser = req.user as any;
+
+    if (currentUser?.role === 2) {
+      const user = await userModel.findById(currentUser.id);
+
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+        });
+      }
+
+      const assignBuildings = user.assignBuilding || [];
+
+      // Nếu có truyền buildingId
+      if (buildingId) {
+        if (typeof buildingId === "object") {
+          return res.status(400).json({
+            message: "buildingId must be a string",
+          });
+        }
+
+        // Check building có thuộc quyền user không
+        const isAllowed = assignBuildings.some(
+          (id: any) => id.toString() === buildingId,
+        );
+
+        if (!isAllowed) {
+          return res.status(403).json({
+            message: "You do not have permission to access this building",
+          });
+        }
+
+        searchParams.buildingId = buildingId as string;
+      } else {
+        searchParams.buildingId = assignBuildings;
+      }
+    } else {
+      // ===== NORMAL FLOW =====
+      if (buildingId) {
+        if (typeof buildingId === "object") {
+          return res.status(400).json({
+            message: "buildingId must be a string",
+          });
+        }
+
+        searchParams.buildingId = buildingId as string;
+      }
+    }
 
     const pagination = PaginationUtil.parsePaginationParams(req.query);
+
     const result = await getAllRooms(searchParams, pagination);
 
     return res.status(200).json({
@@ -82,41 +165,41 @@ export const updateRoomController = async (req: Request, res: Response) => {
   }
 };
 
-// export const deleteRoomController = async (req: Request, res: Response) => {
-//   try {
-//     const { id } = req.params;
-//     const currentUser = (req as any).user;
+export const deleteRoomController = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const currentUser = req.user;
 
-//     if (!id || typeof id !== "string") {
-//       return res.status(400).json({
-//         message: "Invalid room id",
-//       });
-//     }
+    if (!id || typeof id !== "string") {
+      return res.status(400).json({
+        message: "Invalid room id",
+      });
+    }
 
-//     if (currentUser.role === ROLE.TENANT) {
-//       return res.status(403).json({
-//         message: "Tenants cannot delete rooms",
-//       });
-//     }
+    if (currentUser.role === ROLE.noRole) {
+      return res.status(403).json({
+        message: "Tenants cannot delete rooms",
+      });
+    }
 
-//     const room = await deleteRoom(id, currentUser.id);
+    const room = await deleteRoom(id, currentUser.id);
 
-//     if (!room) {
-//       return res.status(404).json({
-//         message: "Room not found or you don't own the building",
-//       });
-//     }
+    if (!room) {
+      return res.status(404).json({
+        message: "Room not found or you don't own the building",
+      });
+    }
 
-//     return res.status(200).json({
-//       message: "Room deleted successfully",
-//       data: room,
-//     });
-//   } catch (error: any) {
-//     return res.status(400).json({
-//       message: error.message,
-//     });
-//   }
-// };
+    return res.status(200).json({
+      message: "Room deleted successfully",
+      data: room,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      message: error.message,
+    });
+  }
+};
 
 export const getRoomByIdController = async (req: Request, res: Response) => {
   try {
@@ -201,19 +284,98 @@ export const getRoomByUserIdController = async (
   }
 };
 
+// export const getRoomsWithMeterReadingsController = async (
+//   req: Request,
+//   res: Response,
+// ) => {
+//   try {
+//     const currentUser = req.user;
+//     const { month, year, buildingId, buildingName, roomNumber, page, limit } =
+//       req.query;
+
+//     if (currentUser.role !== ROLE.admin) {
+//       return res.status(403).json({
+//         message:
+//           "Chỉ chủ nhà mới có thể xem danh sách phòng với chỉ số điện nước",
+//       });
+//     }
+
+//     if (!month || !year) {
+//       return res.status(400).json({
+//         message: "Tháng và năm là bắt buộc",
+//       });
+//     }
+
+//     const monthNum = parseInt(month as string, 10);
+//     const yearNum = parseInt(year as string, 10);
+
+//     if (isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
+//       return res.status(400).json({
+//         message: "Tháng không hợp lệ (1-12)",
+//       });
+//     }
+
+//     if (isNaN(yearNum) || yearNum < 2020 || yearNum > 2030) {
+//       return res.status(400).json({
+//         message: "Năm không hợp lệ (2020-2030)",
+//       });
+//     }
+
+//     // Build search params
+//     const searchParams: any = {};
+//     if (buildingId) {
+//       if (typeof buildingId === "object") {
+//         console.error(
+//           "buildingId is object in getRoomsWithMeterReadings:",
+//           buildingId,
+//         );
+//         return res.status(400).json({
+//           message: "buildingId must be a string, not an object",
+//         });
+//       }
+//       searchParams.buildingId = buildingId as string;
+//     }
+//     if (roomNumber) searchParams.roomNumber = roomNumber as string;
+//     if (buildingName) searchParams.buildingName = buildingName as string;
+
+//     // Build pagination
+//     const pagination: any = {};
+//     if (page) pagination.page = parseInt(page as string);
+//     if (limit) pagination.limit = parseInt(limit as string);
+
+//     const result = await getRoomsWithMeterReadings(
+//       monthNum,
+//       yearNum,
+//       searchParams,
+//       pagination,
+//     );
+
+//     return res.status(200).json({
+//       message: "Lấy danh sách phòng với chỉ số điện nước thành công",
+//       data: result.rooms,
+//       pagination: result.pagination,
+//     });
+//   } catch (error: any) {
+//     return res.status(500).json({
+//       message: error.message,
+//     });
+//   }
+// };
+
 export const getRoomsWithMeterReadingsController = async (
   req: Request,
   res: Response,
 ) => {
   try {
-    const currentUser = (req as any).user;
+    const currentUser = req.user;
+
     const { month, year, buildingId, buildingName, roomNumber, page, limit } =
       req.query;
 
-    if (currentUser.role !== ROLE.admin) {
+    // chỉ admin + manager được xem
+    if (currentUser.role !== ROLE.admin && currentUser.role !== ROLE.manager) {
       return res.status(403).json({
-        message:
-          "Chỉ chủ nhà mới có thể xem danh sách phòng với chỉ số điện nước",
+        message: "Bạn không có quyền xem danh sách phòng với chỉ số điện nước",
       });
     }
 
@@ -238,27 +400,51 @@ export const getRoomsWithMeterReadingsController = async (
       });
     }
 
-    // Build search params
+    // validate buildingId
+    if (buildingId && typeof buildingId === "object") {
+      console.error(
+        "buildingId is object in getRoomsWithMeterReadings:",
+        buildingId,
+      );
+
+      return res.status(400).json({
+        message: "buildingId must be a string, not an object",
+      });
+    }
+
+    // build search params
     const searchParams: any = {};
+
     if (buildingId) {
-      if (typeof buildingId === "object") {
-        console.error(
-          "buildingId is object in getRoomsWithMeterReadings:",
-          buildingId,
-        );
-        return res.status(400).json({
-          message: "buildingId must be a string, not an object",
-        });
-      }
       searchParams.buildingId = buildingId as string;
     }
-    if (roomNumber) searchParams.roomNumber = roomNumber as string;
-    if (buildingName) searchParams.buildingName = buildingName as string;
 
-    // Build pagination
+    if (roomNumber) {
+      searchParams.roomNumber = roomNumber as string;
+    }
+
+    if (buildingName) {
+      searchParams.buildingName = buildingName as string;
+    }
+
+    const user = await getUserById(currentUser.id);
+
+    // manager chỉ xem building được assign
+    if (currentUser.role === ROLE.manager) {
+      searchParams.assignedBuildingIds =
+        user.assignBuilding?.map((id: any) => id.toString()) || [];
+    }
+
+    // build pagination
     const pagination: any = {};
-    if (page) pagination.page = parseInt(page as string);
-    if (limit) pagination.limit = parseInt(limit as string);
+
+    if (page) {
+      pagination.page = parseInt(page as string);
+    }
+
+    if (limit) {
+      pagination.limit = parseInt(limit as string);
+    }
 
     const result = await getRoomsWithMeterReadings(
       monthNum,
@@ -269,10 +455,19 @@ export const getRoomsWithMeterReadingsController = async (
 
     return res.status(200).json({
       message: "Lấy danh sách phòng với chỉ số điện nước thành công",
+
       data: result.rooms,
       pagination: result.pagination,
     });
   } catch (error: any) {
+    console.error("Error in getRoomsWithMeterReadings:", error);
+
+    if (error.message === "FORBIDDEN_BUILDING") {
+      return res.status(403).json({
+        message: "Bạn không có quyền truy cập tòa nhà này",
+      });
+    }
+
     return res.status(500).json({
       message: error.message,
     });

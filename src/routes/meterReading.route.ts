@@ -8,19 +8,48 @@ import {
   deleteMeterReadingController,
   bulkUpsertMeterReadingsController,
 } from "../controllers/meterReading.controller";
+import { ROLE } from "../utils/app.constants";
+import { requireRole } from "../middlewares/role.middleware";
 
 const router = express.Router();
 
-// All meter reading routes require authentication
-router.use(authMiddleware);
-
-router.post("/", createMeterReadingController);
-router.get("/", getMeterReadingsController);
-router.get("/:id", getMeterReadingByIdController);
-router.put("/:id", updateMeterReadingController);
-router.delete("/:id", deleteMeterReadingController);
+router.post(
+  "/",
+  authMiddleware,
+  requireRole([ROLE.admin, ROLE.manager]),
+  createMeterReadingController,
+);
+router.get(
+  "/",
+  authMiddleware,
+  requireRole([ROLE.admin, ROLE.manager]),
+  getMeterReadingsController,
+);
+router.get(
+  "/:id",
+  authMiddleware,
+  requireRole([ROLE.admin, ROLE.manager]),
+  getMeterReadingByIdController,
+);
+router.put(
+  "/:id",
+  authMiddleware,
+  requireRole([ROLE.admin, ROLE.manager]),
+  updateMeterReadingController,
+);
+router.delete(
+  "/:id",
+  authMiddleware,
+  requireRole([ROLE.admin, ROLE.manager]),
+  deleteMeterReadingController,
+);
 
 // POST /api/meter-readings/bulk - Bulk upsert meter readings
-router.post("/bulk", bulkUpsertMeterReadingsController);
+router.post(
+  "/bulk",
+  authMiddleware,
+  requireRole([ROLE.admin, ROLE.manager]),
+  bulkUpsertMeterReadingsController,
+);
 
 export default router;

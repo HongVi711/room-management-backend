@@ -10,7 +10,7 @@ const router = Router();
 router.post(
   "/export-zip",
   authMiddleware,
-  requireRole([ROLE.admin]),
+  requireRole([ROLE.admin, ROLE.manager]),
   exportPaymentsController,
 );
 

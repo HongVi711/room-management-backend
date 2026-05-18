@@ -44,7 +44,6 @@ router.delete(
   deleteMeterReadingController,
 );
 
-// POST /api/meter-readings/bulk - Bulk upsert meter readings
 router.post(
   "/bulk",
   authMiddleware,

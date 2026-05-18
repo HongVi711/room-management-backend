@@ -209,7 +209,7 @@ export const bulkUpsertMeterReadingsController = async (
   try {
     const currentUser = (req as any).user;
 
-    if (currentUser.role !== ROLE.admin) {
+    if (currentUser.role === ROLE.noRole) {
       return res.status(403).json({
         message:
           "Chỉ chủ nhà mới có thể thêm/cập nhật chỉ số điện nước hàng loạt",

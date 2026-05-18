@@ -218,39 +218,99 @@ export const deleteRoom = async (
   return deletedRoom;
 };
 
+// export const getAllRooms = async (
+//   searchParams?: {
+//     roomNumber?: string;
+//     buildingId?: string | string[];
+//     floor?: number;
+//     status?: ROOMSTATUS;
+//   },
+//   pagination?: PaginationParams,
+// ): Promise<PaginatedResponse<IRoom>> => {
+//   let query: any = {
+//     isDeleted: false,
+//   };
+
+//   if (searchParams?.roomNumber) {
+//     query.number = { $regex: searchParams.roomNumber, $options: "i" };
+//   }
+
+//   if (searchParams?.buildingId) {
+//     // array => $in
+//     if (Array.isArray(searchParams.buildingId)) {
+//       query.buildingId = {
+//         $in: searchParams.buildingId.map((id) => new Types.ObjectId(id)),
+//       };
+//     } else {
+//       // single
+//       query.buildingId = new Types.ObjectId(searchParams.buildingId);
+//     }
+//   }
+
+//   if (searchParams?.floor !== undefined) {
+//     query.floor = searchParams.floor;
+//   }
+
+//   if (searchParams?.status) {
+//     query.status = searchParams.status;
+//   }
+
+//   return await PaginationUtil.paginate(Room, query, pagination, {
+//     populate: [
+//       { path: "buildingId", select: "name" },
+//       { path: "members.userId", select: "name email" },
+//     ],
+//     sort: { createdAt: -1 },
+//   });
+// };
+
 export const getAllRooms = async (
   searchParams?: {
-    number?: string;
+    roomNumber?: string;
+    buildingName?: string;
     buildingId?: string | string[];
-    floor?: number;
     status?: ROOMSTATUS;
   },
   pagination?: PaginationParams,
 ): Promise<PaginatedResponse<IRoom>> => {
-  let query: any = {
+  const query: any = {
     isDeleted: false,
   };
 
-  if (searchParams?.number) {
-    query.number = { $regex: searchParams.number, $options: "i" };
+  // room number
+  if (searchParams?.roomNumber) {
+    query.number = {
+      $regex: searchParams.roomNumber,
+      $options: "i",
+    };
   }
 
+  // building name
+  if (searchParams?.buildingName) {
+    const buildings = await Building.find({
+      name: {
+        $regex: searchParams.buildingName,
+        $options: "i",
+      },
+    }).select("_id");
+
+    query.buildingId = {
+      $in: buildings.map((building) => building._id),
+    };
+  }
+
+  // building id
   if (searchParams?.buildingId) {
-    // array => $in
     if (Array.isArray(searchParams.buildingId)) {
       query.buildingId = {
         $in: searchParams.buildingId.map((id) => new Types.ObjectId(id)),
       };
     } else {
-      // single
       query.buildingId = new Types.ObjectId(searchParams.buildingId);
     }
   }
 
-  if (searchParams?.floor !== undefined) {
-    query.floor = searchParams.floor;
-  }
-
+  // status
   if (searchParams?.status) {
     query.status = searchParams.status;
   }

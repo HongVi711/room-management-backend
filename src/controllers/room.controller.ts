@@ -48,19 +48,24 @@ import { getUserById } from "../services/user.service";
 
 export const getAllRoomsController = async (req: Request, res: Response) => {
   try {
-    const { number, buildingId, floor, status } = req.query;
+    const { roomNumber, buildingName, buildingId, status } = req.query;
 
-    const searchParams: any = {};
+    const searchParams: {
+      roomNumber?: string;
+      buildingName?: string;
+      buildingId?: string | string[];
+      status?: ROOMSTATUS;
+    } = {};
 
-    if (number) {
-      searchParams.number = number as string;
+    if (roomNumber && typeof roomNumber === "string") {
+      searchParams.roomNumber = roomNumber;
     }
 
-    if (floor) {
-      searchParams.floor = parseInt(floor as string);
+    if (buildingName && typeof buildingName === "string") {
+      searchParams.buildingName = buildingName;
     }
 
-    if (status) {
+    if (status && typeof status === "string") {
       searchParams.status = status as ROOMSTATUS;
     }
 
@@ -99,7 +104,9 @@ export const getAllRoomsController = async (req: Request, res: Response) => {
 
         searchParams.buildingId = buildingId as string;
       } else {
-        searchParams.buildingId = assignBuildings;
+        searchParams.buildingId = assignBuildings.map((buildingId) =>
+          buildingId.toString(),
+        );
       }
     } else {
       // ===== NORMAL FLOW =====

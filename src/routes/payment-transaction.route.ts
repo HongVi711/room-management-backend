@@ -18,7 +18,7 @@ const router = Router();
 router.post(
   "/confirm",
   authMiddleware,
-  requireRole([ROLE.admin]),
+  requireRole([ROLE.admin, ROLE.manager]),
   confirmPaymentController,
 );
 

@@ -50,10 +50,9 @@ export const updateRoom = async (
   ownerId: string,
 ): Promise<IRoom | null> => {
   const room = await Room.findOne({ _id: roomId, isDeleted: false });
-  if (!room) throw new Error("Không tìm thấy phòng hoặc phòng đã bị xóa");
-
-  const building = await Building.findOne({ _id: room.buildingId, ownerId });
-  if (!building) throw new Error("Bạn không có quyền chỉnh sửa phòng này");
+  if (!room) {
+    throw new Error("Không tìm thấy phòng hoặc phòng đã bị xóa");
+  }
 
   if (data.number && data.number !== room.number) {
     const existingRoom = await Room.findOne({

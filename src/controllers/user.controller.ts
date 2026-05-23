@@ -19,9 +19,6 @@ export const createUser = async (req: Request, res: Response) => {
     const frontFile = files?.cccdFront?.[0];
     const backFile = files?.cccdBack?.[0];
 
-    // CCCD images are optional when creating user
-    // User can update them later
-
     const newUser = await UserService({
       ...req.body,
       password: req.body.phone as string,
@@ -53,7 +50,7 @@ export const getUser = async (req: Request, res: Response) => {
       });
     }
 
-    if (currentUser.role === ROLE.TENANT && currentUser.id !== id) {
+    if (currentUser.role === ROLE.manager && currentUser.id !== id) {
       return res.status(403).json({
         message: "You can only view your own profile",
       });
@@ -82,7 +79,7 @@ export const getUser = async (req: Request, res: Response) => {
 
 export const getAllUsersController = async (req: Request, res: Response) => {
   try {
-    const { email, name, phone } = req.query;
+    const { email, name, phone, page, limit } = req.query;
 
     const searchParams: {
       email?: string;
@@ -123,7 +120,7 @@ export const deleteUserController = async (req: Request, res: Response) => {
     const { id } = req.params;
     const currentUser = (req as any).user;
 
-    if (currentUser.role !== ROLE.OWNER) {
+    if (currentUser.role !== ROLE.admin) {
       return res.status(403).json({
         message: "Only owners can delete users",
       });
@@ -150,8 +147,7 @@ export const updateUserController = async (req: Request, res: Response) => {
     const { id } = req.params;
     const currentUser = (req as any).user;
 
-    // Owners can update any user, tenants can only update themselves
-    if (currentUser.role === ROLE.TENANT && currentUser.id !== id) {
+    if (currentUser.role === ROLE.noRole && currentUser.id !== id) {
       return res.status(403).json({
         message: "You can only update your own profile",
       });
@@ -163,12 +159,10 @@ export const updateUserController = async (req: Request, res: Response) => {
       });
     }
 
-    // Handle file uploads for cccdImages if provided
     const files = req.files as {
       [fieldname: string]: Express.Multer.File[];
     };
 
-    const cccdImages: any = {};
     const frontFile = files?.cccdFront?.[0];
     const backFile = files?.cccdBack?.[0];
 

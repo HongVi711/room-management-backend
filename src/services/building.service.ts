@@ -2,6 +2,48 @@ import Building, { IBuilding } from "../models/building.model";
 import { CreateBuildingDto, UpdateBuildingDto } from "../dtos/building.dto";
 import roomModel from "../models/room.model";
 
+export enum Operator {
+  equal = "eq", // =
+  notEqual = "ne", // !=
+  greaterThan = "gt", // >
+  greaterThanOrEqual = "gte", // >=
+  lessThan = "lt", // <
+  lessThanOrEqual = "lte", // <=
+  in = "in", // in array
+  regex = "regex", // like / contains
+}
+
+export enum SortOrder {
+  asc = "asc",
+  desc = "desc",
+}
+
+export enum SearchQueryField {
+  sortField = "sortField",
+  sortOrder = "sortOrder",
+  limit = "limit",
+  page = "page",
+  fieldName = "fieldName",
+  searchValue = "searchValue",
+  operator = "operator",
+}
+
+export interface SearchQuery {
+  sort?: {
+    sortField: string;
+    sortOrder: SortOrder;
+  };
+  page?: number;
+  limit?: number;
+  conditions?: [
+    {
+      fieldName: string;
+      searchValue: string[] | string;
+      operator: Operator;
+    },
+  ];
+}
+
 interface CreateBuildingInput {
   name: string;
   address: string;
@@ -223,4 +265,249 @@ export const deleteBuilding = async (
   await roomModel.updateMany({ buildingId: buildingId }, { isDeleted: true });
 
   return building;
+};
+
+// export const SearchBuildings = async (req: SearchQuery) => {
+//   try {
+//     const filter: any = {};
+
+//     req.conditions?.forEach((condition) => {
+//       switch (condition.operator) {
+//         case Operator.equal:
+//           filter[condition.fieldName] = condition.searchValue;
+//           break;
+
+//         case Operator.notEqual:
+//           filter[condition.fieldName] = {
+//             $ne: condition.searchValue,
+//           };
+//           break;
+
+//         case Operator.greaterThan:
+//           filter[condition.fieldName] = {
+//             $gt: Number(condition.searchValue),
+//           };
+//           break;
+
+//         case Operator.greaterThanOrEqual:
+//           filter[condition.fieldName] = {
+//             $gte: Number(condition.searchValue),
+//           };
+//           break;
+
+//         case Operator.lessThan:
+//           filter[condition.fieldName] = {
+//             $lt: Number(condition.searchValue),
+//           };
+//           break;
+
+//         case Operator.lessThanOrEqual:
+//           filter[condition.fieldName] = {
+//             $lte: Number(condition.searchValue),
+//           };
+//           break;
+
+//         case Operator.in:
+//           filter[condition.fieldName] = {
+//             $in: condition.searchValue,
+//           };
+//           break;
+
+//         case Operator.regex:
+//           filter[condition.fieldName] = {
+//             $regex: condition.searchValue,
+//             $options: "i",
+//           };
+//           break;
+//       }
+//     });
+
+//     const page = req.page ?? 1;
+//     const limit = req.limit ?? 10;
+//     const skip = (page - 1) * limit;
+
+//     const query = Building.find(filter).skip(skip).limit(limit);
+
+//     if (req.sort) {
+//       query.sort({
+//         [req.sort.sortField]: req.sort.sortOrder === SortOrder.asc ? 1 : -1,
+//       });
+//     }
+
+//     const [data, total] = await Promise.all([
+//       query.exec(),
+//       Building.countDocuments(filter),
+//     ]);
+
+//     const totalPages = Math.ceil(total / limit);
+
+//     return {
+//       pagination: {
+//         page,
+//         limit,
+//         total,
+//         totalPages,
+//         hasNext: page < totalPages,
+//         hasPrev: page > 1,
+//       },
+//       data,
+//     };
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+export const SearchBuildings = async (req: SearchQuery) => {
+  try {
+    const filter: Record<string, any> = {
+      isDeleted: false,
+    };
+
+    req.conditions?.forEach((condition) => {
+      const field = condition.fieldName;
+
+      if (!filter[field] || typeof filter[field] !== "object") {
+        filter[field] = {};
+      }
+
+      switch (condition.operator) {
+        case Operator.equal:
+          filter[field] = condition.searchValue;
+          break;
+
+        case Operator.notEqual:
+          filter[field].$ne = condition.searchValue;
+          break;
+
+        case Operator.greaterThan:
+          filter[field].$gt = Number(condition.searchValue);
+          break;
+
+        case Operator.greaterThanOrEqual:
+          filter[field].$gte = Number(condition.searchValue);
+          break;
+
+        case Operator.lessThan:
+          filter[field].$lt = Number(condition.searchValue);
+          break;
+
+        case Operator.lessThanOrEqual:
+          filter[field].$lte = Number(condition.searchValue);
+          break;
+
+        case Operator.in:
+          filter[field].$in = Array.isArray(condition.searchValue)
+            ? condition.searchValue
+            : [condition.searchValue];
+          break;
+
+        case Operator.regex:
+          filter[field] = {
+            $regex: condition.searchValue,
+            $options: "i",
+          };
+          break;
+      }
+    });
+
+    const page = Math.max(1, req.page ?? 1);
+    const limit = Math.min(100, Math.max(1, req.limit ?? 10));
+    const skip = (page - 1) * limit;
+
+    const query = Building.find(filter).skip(skip).limit(limit).lean();
+
+    if (req.sort) {
+      query.sort({
+        [req.sort.sortField]: req.sort.sortOrder === SortOrder.asc ? 1 : -1,
+      });
+    } else {
+      query.sort({ createdAt: -1 });
+    }
+
+    const [buildings, total] = await Promise.all([
+      query.exec(),
+      Building.countDocuments(filter),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    if (buildings.length === 0) {
+      return {
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNext: false,
+          hasPrev: false,
+        },
+        data: [],
+      };
+    }
+
+    // ===== room statistics =====
+
+    const buildingIds = buildings.map((b) => b._id);
+
+    const roomStats = await roomModel.aggregate([
+      {
+        $match: {
+          buildingId: {
+            $in: buildingIds,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            buildingId: "$buildingId",
+            status: "$status",
+          },
+          count: {
+            $sum: 1,
+          },
+        },
+      },
+    ]);
+
+    const statsMap: Record<string, any> = {};
+
+    roomStats.forEach((stat) => {
+      const buildingId = stat._id.buildingId.toString();
+      const status = stat._id.status;
+
+      if (!statsMap[buildingId]) {
+        statsMap[buildingId] = {
+          available: 0,
+          occupied: 0,
+          maintenance: 0,
+        };
+      }
+
+      statsMap[buildingId][status] = stat.count;
+    });
+
+    const enrichedBuildings = buildings.map((building) => ({
+      ...building,
+      roomStatus: statsMap[building._id.toString()] ?? {
+        available: 0,
+        occupied: 0,
+        maintenance: 0,
+      },
+    }));
+
+    return {
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+      data: enrichedBuildings,
+    };
+  } catch (error) {
+    throw error;
+  }
 };

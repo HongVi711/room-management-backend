@@ -21,7 +21,7 @@ const router = Router();
 router.post(
   "/",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin, ROLE.manager]),
   createExpenseController,
 );
 
@@ -33,7 +33,7 @@ router.post(
 router.get(
   "/",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin, ROLE.manager]),
   getExpensesController,
 );
 
@@ -45,7 +45,7 @@ router.get(
 router.get(
   "/:id",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin, ROLE.manager]),
   getExpenseByIdController,
 );
 
@@ -57,7 +57,7 @@ router.get(
 router.put(
   "/:id",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin, ROLE.manager]),
   updateExpenseController,
 );
 
@@ -69,7 +69,7 @@ router.put(
 router.delete(
   "/:id",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin, ROLE.manager]),
   deleteExpenseController,
 );
 
@@ -81,7 +81,7 @@ router.delete(
 router.get(
   "/by-building",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin, ROLE.manager]),
   getExpensesByBuildingController,
 );
 

@@ -6,6 +6,62 @@ import {
   getInvoiceById,
   deleteInvoice,
 } from "../services/invoice.service";
+import { getUserById } from "../services/user.service";
+
+// export const getInvoicePreviewController = async (
+//   req: Request,
+//   res: Response,
+// ) => {
+//   try {
+//     const { month, year, buildingId } = req.query;
+//     if (
+//       month &&
+//       (isNaN(parseInt(month as string)) ||
+//         parseInt(month as string) < 1 ||
+//         parseInt(month as string) > 12)
+//     ) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Tháng không hợp lệ",
+//       });
+//     }
+
+//     if (year && isNaN(parseInt(year as string))) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Năm không hợp lệ",
+//       });
+//     }
+
+//     const monthNum = month ? parseInt(month as string) : undefined;
+//     const yearNum = year ? parseInt(year as string) : undefined;
+
+//     if (buildingId && typeof buildingId === "object") {
+//       console.error("buildingId is object in getInvoicePreview:", buildingId);
+//       return res.status(400).json({
+//         success: false,
+//         message: "buildingId must be a string, not an object",
+//       });
+//     }
+
+//     const result = await getInvoicePreview(
+//       monthNum,
+//       yearNum,
+//       buildingId as string,
+//     );
+
+//     res.json({
+//       success: true,
+//       data: result,
+//     });
+//   } catch (error) {
+//     console.error("Error in getInvoicePreview:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Lỗi server",
+//     });
+//   }
+// };
 
 export const getInvoicePreviewController = async (
   req: Request,
@@ -13,6 +69,10 @@ export const getInvoicePreviewController = async (
 ) => {
   try {
     const { month, year, buildingId } = req.query;
+
+    const user = req.user as any;
+
+    // validate month
     if (
       month &&
       (isNaN(parseInt(month as string)) ||
@@ -25,6 +85,7 @@ export const getInvoicePreviewController = async (
       });
     }
 
+    // validate year
     if (year && isNaN(parseInt(year as string))) {
       return res.status(400).json({
         success: false,
@@ -32,30 +93,54 @@ export const getInvoicePreviewController = async (
       });
     }
 
-    const monthNum = month ? parseInt(month as string) : undefined;
-    const yearNum = year ? parseInt(year as string) : undefined;
-
+    // validate buildingId
     if (buildingId && typeof buildingId === "object") {
       console.error("buildingId is object in getInvoicePreview:", buildingId);
+
       return res.status(400).json({
         success: false,
-        message: "buildingId must be a string, not an object",
+        message: "buildingId must be a string",
       });
+    }
+
+    const monthNum = month ? parseInt(month as string) : undefined;
+
+    const yearNum = year ? parseInt(year as string) : undefined;
+
+    const buildingIdStr = buildingId as string | undefined;
+
+    let assignedBuildingIds: string[] | undefined;
+
+    const userObj = await getUserById(user.id);
+
+    // role manager
+    if (user.role === 2) {
+      assignedBuildingIds =
+        userObj.assignBuilding?.map((id: any) => id.toString()) || [];
     }
 
     const result = await getInvoicePreview(
       monthNum,
       yearNum,
-      buildingId as string,
+      buildingIdStr,
+      assignedBuildingIds,
     );
 
-    res.json({
+    return res.json({
       success: true,
       data: result,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in getInvoicePreview:", error);
-    res.status(500).json({
+
+    if (error.message === "FORBIDDEN_BUILDING") {
+      return res.status(403).json({
+        success: false,
+        message: "Bạn không có quyền truy cập tòa nhà này",
+      });
+    }
+
+    return res.status(500).json({
       success: false,
       message: "Lỗi server",
     });
@@ -115,6 +200,69 @@ export const bulkCreateInvoicesController = async (
   }
 };
 
+// export const getInvoicesController = async (req: Request, res: Response) => {
+//   try {
+//     const {
+//       month,
+//       year,
+//       buildingId,
+//       roomId,
+//       status,
+//       page = 1,
+//       limit = 10,
+//     } = req.query;
+
+//     // Validate optional params - month/year now optional for full list
+//     if (
+//       month &&
+//       (isNaN(parseInt(month as string)) ||
+//         parseInt(month as string) < 1 ||
+//         parseInt(month as string) > 12)
+//     ) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Tháng không hợp lệ",
+//       });
+//     }
+
+//     if (year && isNaN(parseInt(year as string))) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Năm không hợp lệ",
+//       });
+//     }
+
+//     const monthNum = month ? parseInt(month as string) : undefined;
+//     const yearNum = year ? parseInt(year as string) : undefined;
+//     const pageNum = parseInt(page as string);
+//     const limitNum = parseInt(limit as string);
+//     const serviceParams: any = {
+//       page: pageNum,
+//       limit: limitNum,
+//     };
+
+//     if (monthNum !== undefined) serviceParams.month = monthNum;
+//     if (yearNum !== undefined) serviceParams.year = yearNum;
+//     if (buildingId) serviceParams.buildingId = buildingId as string;
+//     if (roomId) serviceParams.roomId = roomId as string;
+//     if (status) serviceParams.status = status as string;
+
+//     const result = await getInvoices(serviceParams);
+
+//     res.json({
+//       success: true,
+//       data: result,
+//     });
+//   } catch (error) {
+//     console.error("Error in getInvoices:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Lỗi server",
+//     });
+//   }
+// };
+
+// controller
 export const getInvoicesController = async (req: Request, res: Response) => {
   try {
     const {
@@ -127,50 +275,34 @@ export const getInvoicesController = async (req: Request, res: Response) => {
       limit = 10,
     } = req.query;
 
-    // Validate optional params - month/year now optional for full list
-    if (
-      month &&
-      (isNaN(parseInt(month as string)) ||
-        parseInt(month as string) < 1 ||
-        parseInt(month as string) > 12)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Tháng không hợp lệ",
-      });
-    }
+    const user = req.user as any;
 
-    if (year && isNaN(parseInt(year as string))) {
-      return res.status(400).json({
-        success: false,
-        message: "Năm không hợp lệ",
-      });
-    }
-
-    const monthNum = month ? parseInt(month as string) : undefined;
-    const yearNum = year ? parseInt(year as string) : undefined;
-    const pageNum = parseInt(page as string);
-    const limitNum = parseInt(limit as string);
     const serviceParams: any = {
-      page: pageNum,
-      limit: limitNum,
+      month: month ? parseInt(month as string) : undefined,
+      year: year ? parseInt(year as string) : undefined,
+      buildingId: buildingId as string,
+      roomId: roomId as string,
+      status: status as string,
+      page: parseInt(page as string),
+      limit: parseInt(limit as string),
     };
 
-    if (monthNum !== undefined) serviceParams.month = monthNum;
-    if (yearNum !== undefined) serviceParams.year = yearNum;
-    if (buildingId) serviceParams.buildingId = buildingId as string;
-    if (roomId) serviceParams.roomId = roomId as string;
-    if (status) serviceParams.status = status as string;
+    // Manager
+    if (user.role === 2) {
+      serviceParams.assignedBuildingIds =
+        user.assignBuildings?.map((id: any) => id.toString()) || [];
+    }
 
     const result = await getInvoices(serviceParams);
 
-    res.json({
+    return res.json({
       success: true,
       data: result,
     });
   } catch (error) {
     console.error("Error in getInvoices:", error);
-    res.status(500).json({
+
+    return res.status(500).json({
       success: false,
       message: "Lỗi server",
     });

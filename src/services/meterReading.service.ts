@@ -7,6 +7,7 @@ import { BulkMeterReadingDto } from "../dtos/bulkMeterReading.dto";
 import { Types } from "mongoose";
 import { getRoomById } from "./room.service";
 import { getBuildingById } from "./building.service";
+import roomModel from "../models/room.model";
 
 export const createMeterReading = async (
   data: CreateMeterReadingDto,
@@ -51,16 +52,88 @@ export const createMeterReading = async (
   return meterReading;
 };
 
+// export const getMeterReadings = async (
+//   roomId?: string,
+//   month?: number,
+//   year?: number,
+//   page: number = 1,
+//   limit: number = 10,
+// ) => {
+//   let query: any = {};
+
+//   if (roomId) {
+//     query.roomId = new Types.ObjectId(roomId);
+//   }
+
+//   if (month !== undefined) {
+//     query.month = month;
+//   }
+
+//   if (year !== undefined) {
+//     query.year = year;
+//   }
+
+//   const skip = (page - 1) * limit;
+//   const total = await MeterReading.countDocuments(query);
+//   const totalPages = Math.ceil(total / limit);
+
+//   const meterReadings = await MeterReading.find(query)
+//     .populate("roomId", "number buildingId")
+//     .sort({ year: -1, month: -1 })
+//     .skip(skip)
+//     .limit(limit);
+
+//   return {
+//     meterReadings,
+//     pagination: {
+//       page,
+//       limit,
+//       total,
+//       totalPages,
+//       hasNext: page < totalPages,
+//       hasPrev: page > 1,
+//     },
+//   };
+// };
+
+// service
 export const getMeterReadings = async (
   roomId?: string,
   month?: number,
   year?: number,
   page: number = 1,
   limit: number = 10,
+  assignedBuildingIds?: string[],
 ) => {
   let query: any = {};
 
-  if (roomId) {
+  // manager filter buildings
+  if (assignedBuildingIds?.length) {
+    const roomFilter: any = {
+      buildingId: {
+        $in: assignedBuildingIds.map((id) => new Types.ObjectId(id)),
+      },
+    };
+
+    // nếu manager truyền roomId
+    if (roomId) {
+      roomFilter._id = new Types.ObjectId(roomId);
+    }
+
+    const allowedRooms = await roomModel.find(roomFilter).distinct("_id");
+
+    // manager truyền room không thuộc building được assign
+    if (roomId && allowedRooms.length === 0) {
+      throw new Error("FORBIDDEN_ROOM");
+    }
+
+    query.roomId = {
+      $in: allowedRooms,
+    };
+  }
+
+  // admin hoặc role khác
+  else if (roomId) {
     query.roomId = new Types.ObjectId(roomId);
   }
 
@@ -73,12 +146,17 @@ export const getMeterReadings = async (
   }
 
   const skip = (page - 1) * limit;
+
   const total = await MeterReading.countDocuments(query);
+
   const totalPages = Math.ceil(total / limit);
 
   const meterReadings = await MeterReading.find(query)
     .populate("roomId", "number buildingId")
-    .sort({ year: -1, month: -1 })
+    .sort({
+      year: -1,
+      month: -1,
+    })
     .skip(skip)
     .limit(limit);
 

@@ -5,6 +5,7 @@ import {
   getAllBuildingsController,
   updateBuildingController,
   deleteBuildingController,
+  getSearchAllBuildingsByRoleController,
 } from "../controllers/building.controller";
 import { validateDto } from "../middlewares/validate.middleware";
 import { CreateBuildingDto, UpdateBuildingDto } from "../dtos/building.dto";
@@ -17,28 +18,36 @@ const router = Router();
 router.post(
   "/",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin]),
   validateDto(CreateBuildingDto),
   createBuildingController,
 );
+
 router.get(
   "/:id",
   authMiddleware,
-  requireRole([ROLE.OWNER, ROLE.TENANT]),
+  requireRole([ROLE.admin, ROLE.manager]),
   getBuildingController,
 );
 
 router.get(
   "/",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin]),
   getAllBuildingsController,
+);
+
+router.post(
+  "/search",
+  authMiddleware,
+  requireRole([ROLE.admin, ROLE.manager]),
+  getSearchAllBuildingsByRoleController,
 );
 
 router.put(
   "/:id",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin, ROLE.manager]),
   validateDto(UpdateBuildingDto),
   updateBuildingController,
 );
@@ -46,7 +55,7 @@ router.put(
 router.delete(
   "/:id",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin, ROLE.manager]),
   deleteBuildingController,
 );
 

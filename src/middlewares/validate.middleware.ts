@@ -15,6 +15,15 @@ const cleanupFiles = async (files: any) => {
 
 export const validateDto = (DtoClass: any) => {
   return async (req: Request, res: Response, next: NextFunction) => {
+    if (
+      req.body.assignBuilding === undefined ||
+      req.body.assignBuilding === ""
+    ) {
+      req.body.assignBuilding = [];
+    } else if (!Array.isArray(req.body.assignBuilding)) {
+      req.body.assignBuilding = [req.body.assignBuilding];
+    }
+
     const dtoObj = plainToInstance(DtoClass, req.body);
 
     const errors = await validate(dtoObj);
@@ -22,9 +31,11 @@ export const validateDto = (DtoClass: any) => {
     if (errors.length > 0) {
       await cleanupFiles(req.files);
 
-      const messages = errors.map((err) => Object.values(err.constraints || {})).flat();
+      const messages = errors
+        .map((err) => Object.values(err.constraints || {}))
+        .flat();
       return res.status(400).json({
-        message: "Validation Error",
+        message: "Có lỗi xảy ra trong quá trình xử lý",
         errors: messages,
       });
     }

@@ -32,16 +32,223 @@ const fillBaseFees = (room: any, roomData: InvoicePreviewItem): void => {
     waterCost;
 };
 
+// export const getInvoicePreview = async (
+//   month?: number,
+//   year?: number,
+//   buildingId?: string,
+// ): Promise<InvoicePreviewItem[]> => {
+//   const results: InvoicePreviewItem[] = [];
+
+//   const roomFilter = buildingId
+//     ? { buildingId: new Types.ObjectId(buildingId), isDeleted: false }
+//     : { isDeleted: false };
+
+//   const rooms = await Room.find(roomFilter)
+//     .populate("buildingId", "name")
+//     .populate("members.userId", "fullName");
+
+//   if (rooms.length === 0) {
+//     return results;
+//   }
+
+//   let prevMonth: number | undefined;
+//   let prevYear: number | undefined;
+
+//   if (month && year) {
+//     prevMonth = month - 1;
+//     prevYear = year;
+//     if (prevMonth === 0) {
+//       prevMonth = 12;
+//       prevYear = year - 1;
+//     }
+//   }
+
+//   const roomIds = rooms.map((r) => r._id);
+
+//   let readings: any[] = [];
+//   if (month && year) {
+//     readings = await MeterReading.find({
+//       roomId: { $in: roomIds },
+//       $or: [
+//         { month, year },
+//         { month: prevMonth!, year: prevYear! },
+//       ],
+//     });
+//   }
+
+//   const readingMap = new Map<string, any>();
+//   readings.forEach((r) => {
+//     const key = `${r.roomId}_${r.month}_${r.year}`;
+//     readingMap.set(key, r);
+//   });
+
+//   const invoiceQuery: any = { roomId: { $in: roomIds } };
+//   if (month !== undefined) invoiceQuery.month = month;
+//   if (year !== undefined) invoiceQuery.year = year;
+
+//   const existingInvoices = await Invoice.find(invoiceQuery);
+
+//   for (const room of rooms) {
+//     const building = room.buildingId as any;
+//     const roomData: InvoicePreviewItem = {
+//       roomId: room._id.toString(),
+//       roomName: room.number,
+//       buildingName: building?.name || "Unknown",
+//       canCreateInvoice: false,
+//     };
+
+//     try {
+//       const existingInvoice = existingInvoices.find(
+//         (inv) => inv.roomId.toString() === room._id.toString(),
+//       );
+
+//       if (existingInvoice) {
+//         roomData.electricityUsage = existingInvoice.electricityUsage;
+//         roomData.electricityCost = existingInvoice.electricityCost;
+//         roomData.waterUsage = existingInvoice.waterUsage;
+//         roomData.waterCost = existingInvoice.waterCost;
+
+//         roomData.rentAmount = existingInvoice.rentAmount;
+//         roomData.livingFee = existingInvoice.livingFee;
+//         roomData.parkingFee = existingInvoice.parkingFee;
+//         roomData.otherFee = existingInvoice.otherFee;
+
+//         roomData.totalAmount = existingInvoice.totalAmount;
+
+//         roomData.canCreateInvoice = false;
+//         roomData.error = "Đã có hóa đơn";
+
+//         results.push(roomData);
+//         continue;
+//       }
+
+//       const currentReading = readingMap.get(`${room._id}_${month}_${year}`);
+//       const previousReading = readingMap.get(
+//         `${room._id}_${prevMonth}_${prevYear}`,
+//       );
+
+//       if (!currentReading && !previousReading) {
+//         roomData.error = "Thiếu chỉ số tháng hiện tại và tháng trước";
+//         if (room) fillBaseFees(room, roomData);
+//         results.push(roomData);
+//         continue;
+//       } else if (!currentReading) {
+//         roomData.error = "Thiếu chỉ số tháng hiện tại";
+//         if (room) fillBaseFees(room, roomData);
+//         results.push(roomData);
+//         continue;
+//       } else if (!previousReading) {
+//         roomData.error = "Thiếu chỉ số tháng trước";
+//         if (room) fillBaseFees(room, roomData);
+//         results.push(roomData);
+//         continue;
+//       }
+
+//       const electricityUsage =
+//         (currentReading?.electricityReading || 0) -
+//         (previousReading?.electricityReading || 0);
+//       const waterUsage =
+//         (currentReading?.waterReading || 0) -
+//         (previousReading?.waterReading || 0);
+
+//       if (electricityUsage < 0) {
+//         roomData.error = "Chỉ số điện không hợp lệ";
+//         if (room) fillBaseFees(room, roomData);
+//         results.push(roomData);
+//         continue;
+//       }
+
+//       if (waterUsage < 0) {
+//         roomData.error = "Chỉ số nước không hợp lệ";
+//         if (room) fillBaseFees(room, roomData);
+//         results.push(roomData);
+//         continue;
+//       }
+
+//       const electricityCost =
+//         electricityUsage * (room.electricityUnitPrice || 0);
+//       let waterCost = 0;
+//       const waterPricePerPerson = room.waterPricePerPerson || 0;
+//       const waterPricePerCubicMeter = room.waterPricePerCubicMeter || 0;
+
+//       if (waterPricePerPerson > 0) {
+//         waterCost = waterPricePerPerson;
+//       } else if (waterPricePerCubicMeter > 0) {
+//         waterCost = waterUsage * waterPricePerCubicMeter;
+//       }
+
+//       const rentAmount = room.price || 0;
+//       const livingFee = room.livingFee || 0;
+//       const parkingFee = room.parkingFee || 0;
+//       const otherFee = 0;
+
+//       const totalAmount =
+//         electricityCost +
+//         waterCost +
+//         rentAmount +
+//         livingFee +
+//         parkingFee +
+//         otherFee;
+
+//       // 14. Gán kết quả
+//       roomData.electricityUsage = electricityUsage;
+//       roomData.electricityCost = electricityCost;
+//       roomData.waterUsage = waterUsage;
+//       roomData.waterCost = waterCost;
+//       roomData.rentAmount = rentAmount;
+//       roomData.livingFee = livingFee;
+//       roomData.parkingFee = parkingFee;
+//       roomData.otherFee = otherFee;
+//       roomData.totalAmount = totalAmount;
+//       roomData.canCreateInvoice = true;
+
+//       results.push(roomData);
+//     } catch (error) {
+//       console.error(`Error processing room ${room._id}:`, error);
+//       roomData.error = "Lỗi xử lý";
+//       if (room) fillBaseFees(room, roomData);
+//       results.push(roomData);
+//     }
+//   }
+
+//   return results;
+// };
+
 export const getInvoicePreview = async (
   month?: number,
   year?: number,
   buildingId?: string,
+  assignedBuildingIds?: string[],
 ): Promise<InvoicePreviewItem[]> => {
   const results: InvoicePreviewItem[] = [];
 
-  const roomFilter = buildingId
-    ? { buildingId: new Types.ObjectId(buildingId), isDeleted: false }
-    : { isDeleted: false };
+  // build room filter
+  const roomFilter: any = {
+    isDeleted: false,
+  };
+
+  // Admin chọn building cụ thể
+  if (buildingId) {
+    roomFilter.buildingId = new Types.ObjectId(buildingId);
+  }
+
+  // Manager chỉ xem building được assign
+  if (assignedBuildingIds?.length) {
+    roomFilter.buildingId = {
+      $in: assignedBuildingIds.map((id) => new Types.ObjectId(id)),
+    };
+
+    // Manager truyền buildingId cụ thể
+    if (buildingId) {
+      const isAllowed = assignedBuildingIds.includes(buildingId);
+
+      if (!isAllowed) {
+        throw new Error("FORBIDDEN_BUILDING");
+      }
+
+      roomFilter.buildingId = new Types.ObjectId(buildingId);
+    }
+  }
 
   const rooms = await Room.find(roomFilter)
     .populate("buildingId", "name")
@@ -57,6 +264,7 @@ export const getInvoicePreview = async (
   if (month && year) {
     prevMonth = month - 1;
     prevYear = year;
+
     if (prevMonth === 0) {
       prevMonth = 12;
       prevYear = year - 1;
@@ -66,6 +274,7 @@ export const getInvoicePreview = async (
   const roomIds = rooms.map((r) => r._id);
 
   let readings: any[] = [];
+
   if (month && year) {
     readings = await MeterReading.find({
       roomId: { $in: roomIds },
@@ -77,19 +286,29 @@ export const getInvoicePreview = async (
   }
 
   const readingMap = new Map<string, any>();
+
   readings.forEach((r) => {
     const key = `${r.roomId}_${r.month}_${r.year}`;
     readingMap.set(key, r);
   });
 
-  const invoiceQuery: any = { roomId: { $in: roomIds } };
-  if (month !== undefined) invoiceQuery.month = month;
-  if (year !== undefined) invoiceQuery.year = year;
+  const invoiceQuery: any = {
+    roomId: { $in: roomIds },
+  };
+
+  if (month !== undefined) {
+    invoiceQuery.month = month;
+  }
+
+  if (year !== undefined) {
+    invoiceQuery.year = year;
+  }
 
   const existingInvoices = await Invoice.find(invoiceQuery);
 
   for (const room of rooms) {
     const building = room.buildingId as any;
+
     const roomData: InvoicePreviewItem = {
       roomId: room._id.toString(),
       roomName: room.number,
@@ -102,15 +321,22 @@ export const getInvoicePreview = async (
         (inv) => inv.roomId.toString() === room._id.toString(),
       );
 
+      // đã có invoice
       if (existingInvoice) {
         roomData.electricityUsage = existingInvoice.electricityUsage;
+
         roomData.electricityCost = existingInvoice.electricityCost;
+
         roomData.waterUsage = existingInvoice.waterUsage;
+
         roomData.waterCost = existingInvoice.waterCost;
 
         roomData.rentAmount = existingInvoice.rentAmount;
+
         roomData.livingFee = existingInvoice.livingFee;
+
         roomData.parkingFee = existingInvoice.parkingFee;
+
         roomData.otherFee = existingInvoice.otherFee;
 
         roomData.totalAmount = existingInvoice.totalAmount;
@@ -123,52 +349,75 @@ export const getInvoicePreview = async (
       }
 
       const currentReading = readingMap.get(`${room._id}_${month}_${year}`);
+
       const previousReading = readingMap.get(
         `${room._id}_${prevMonth}_${prevYear}`,
       );
 
+      // thiếu readings
       if (!currentReading && !previousReading) {
         roomData.error = "Thiếu chỉ số tháng hiện tại và tháng trước";
-        if (room) fillBaseFees(room, roomData);
-        results.push(roomData);
-        continue;
-      } else if (!currentReading) {
-        roomData.error = "Thiếu chỉ số tháng hiện tại";
-        if (room) fillBaseFees(room, roomData);
-        results.push(roomData);
-        continue;
-      } else if (!previousReading) {
-        roomData.error = "Thiếu chỉ số tháng trước";
-        if (room) fillBaseFees(room, roomData);
+
+        fillBaseFees(room, roomData);
+
         results.push(roomData);
         continue;
       }
 
+      if (!currentReading) {
+        roomData.error = "Thiếu chỉ số tháng hiện tại";
+
+        fillBaseFees(room, roomData);
+
+        results.push(roomData);
+        continue;
+      }
+
+      if (!previousReading) {
+        roomData.error = "Thiếu chỉ số tháng trước";
+
+        fillBaseFees(room, roomData);
+
+        results.push(roomData);
+        continue;
+      }
+
+      // usage
       const electricityUsage =
         (currentReading?.electricityReading || 0) -
         (previousReading?.electricityReading || 0);
+
       const waterUsage =
         (currentReading?.waterReading || 0) -
         (previousReading?.waterReading || 0);
 
+      // validate usage
       if (electricityUsage < 0) {
         roomData.error = "Chỉ số điện không hợp lệ";
-        if (room) fillBaseFees(room, roomData);
+
+        fillBaseFees(room, roomData);
+
         results.push(roomData);
         continue;
       }
 
       if (waterUsage < 0) {
         roomData.error = "Chỉ số nước không hợp lệ";
-        if (room) fillBaseFees(room, roomData);
+
+        fillBaseFees(room, roomData);
+
         results.push(roomData);
         continue;
       }
 
+      // calculate costs
       const electricityCost =
         electricityUsage * (room.electricityUnitPrice || 0);
+
       let waterCost = 0;
+
       const waterPricePerPerson = room.waterPricePerPerson || 0;
+
       const waterPricePerCubicMeter = room.waterPricePerCubicMeter || 0;
 
       if (waterPricePerPerson > 0) {
@@ -190,7 +439,7 @@ export const getInvoicePreview = async (
         parkingFee +
         otherFee;
 
-      // 14. Gán kết quả
+      // assign result
       roomData.electricityUsage = electricityUsage;
       roomData.electricityCost = electricityCost;
       roomData.waterUsage = waterUsage;
@@ -205,8 +454,11 @@ export const getInvoicePreview = async (
       results.push(roomData);
     } catch (error) {
       console.error(`Error processing room ${room._id}:`, error);
+
       roomData.error = "Lỗi xử lý";
-      if (room) fillBaseFees(room, roomData);
+
+      fillBaseFees(room, roomData);
+
       results.push(roomData);
     }
   }
@@ -539,18 +791,136 @@ export const bulkCreateInvoices = async (
   };
 };
 
+// export const getInvoices = async (options: {
+//   month?: number;
+//   year?: number;
+//   buildingId?: string;
+//   roomId?: string;
+//   status?: string;
+//   page: number;
+//   limit: number;
+// }) => {
+//   const { month, year, buildingId, roomId, status, page, limit } = options;
+
+//   // Build filter
+//   const filter: any = {};
+
+//   if (month !== undefined && year !== undefined) {
+//     filter.month = month;
+//     filter.year = year;
+//   }
+
+//   if (buildingId) {
+//     const buildingRooms = await Room.find({
+//       buildingId: new Types.ObjectId(buildingId),
+//     }).distinct("_id");
+//     filter.roomId = { $in: buildingRooms };
+//   }
+
+//   if (roomId) {
+//     filter.roomId = new Types.ObjectId(roomId);
+//   }
+
+//   if (status) {
+//     filter.status = status;
+//   }
+
+//   // Calculate skip
+//   const skip = (page - 1) * limit;
+
+//   // Query with pagination
+//   const [invoices, total] = await Promise.all([
+//     Invoice.find(filter)
+//       .select(
+//         "tenantId roomId month year electricityPrevious electricityCurrent electricityUsage electricityUnitPrice electricityCost waterPrevious waterCurrent waterUsage waterUnitPrice waterCost rentAmount parkingFee livingFee otherFee totalAmount dueDate notes status createdAt updatedAt",
+//       )
+//       .populate("roomId", "number")
+//       .populate({
+//         path: "roomId",
+//         populate: {
+//           path: "buildingId",
+//           select: "name",
+//         },
+//       })
+//       .sort({ createdAt: -1 })
+//       .skip(skip)
+//       .limit(limit)
+//       .lean(),
+//     Invoice.countDocuments(filter),
+//   ]);
+
+//   // Populate tenant info for all invoices
+//   const roomIds = [...new Set(invoices.map((inv) => inv.roomId))];
+//   const rooms = await Room.find({ _id: { $in: roomIds } })
+//     .select("members")
+//     .lean();
+
+//   const roomMembersMap = new Map();
+//   rooms.forEach((room) => {
+//     roomMembersMap.set(room._id.toString(), room.members);
+//   });
+
+//   // Add tenant info to each invoice
+//   invoices.forEach((invoice) => {
+//     if (invoice.roomId && invoice.tenantId) {
+//       const members = roomMembersMap.get(invoice.roomId.toString());
+//       if (members) {
+//         const tenant = members.find(
+//           (member: {
+//             _id: string;
+//             name: string;
+//             phone: string;
+//             isRepresentative: boolean;
+//           }) => member._id.toString() === invoice.tenantId.toString(),
+//         );
+//         if (tenant) {
+//           (invoice as any).tenantInfo = {
+//             _id: tenant._id,
+//             name: tenant.name,
+//             phone: tenant.phone,
+//             isRepresentative: tenant.isRepresentative,
+//           };
+//         }
+//       }
+//     }
+//   });
+
+//   const totalPages = Math.ceil(total / limit);
+
+//   return {
+//     invoices,
+//     pagination: {
+//       currentPage: page,
+//       totalPages,
+//       totalItems: total,
+//       itemsPerPage: limit,
+//       hasNextPage: page < totalPages,
+//       hasPrevPage: page > 1,
+//     },
+//   };
+// };
+
 export const getInvoices = async (options: {
   month?: number;
   year?: number;
   buildingId?: string;
+  assignedBuildingIds?: string[];
   roomId?: string;
   status?: string;
   page: number;
   limit: number;
 }) => {
-  const { month, year, buildingId, roomId, status, page, limit } = options;
+  const {
+    month,
+    year,
+    buildingId,
+    assignedBuildingIds,
+    roomId,
+    status,
+    page,
+    limit,
+  } = options;
 
-  // Build filter
   const filter: any = {};
 
   if (month !== undefined && year !== undefined) {
@@ -558,13 +928,42 @@ export const getInvoices = async (options: {
     filter.year = year;
   }
 
+  // xử lý building filter
+  let buildingQuery: any = {};
+
+  // admin chọn building cụ thể
   if (buildingId) {
-    const buildingRooms = await Room.find({
-      buildingId: new Types.ObjectId(buildingId),
-    }).distinct("_id");
-    filter.roomId = { $in: buildingRooms };
+    buildingQuery.buildingId = new Types.ObjectId(buildingId);
   }
 
+  // manager chỉ xem building được assign
+  if (assignedBuildingIds?.length) {
+    buildingQuery.buildingId = {
+      $in: assignedBuildingIds.map((id) => new Types.ObjectId(id)),
+    };
+
+    // manager mà truyền buildingId
+    if (buildingId) {
+      buildingQuery.buildingId = new Types.ObjectId(buildingId);
+
+      const isAllowed = assignedBuildingIds.includes(buildingId);
+
+      if (!isAllowed) {
+        throw new Error("FORBIDDEN_BUILDING");
+      }
+    }
+  }
+
+  // lấy rooms theo building
+  if (Object.keys(buildingQuery).length > 0) {
+    const buildingRooms = await Room.find(buildingQuery).distinct("_id");
+
+    filter.roomId = {
+      $in: buildingRooms,
+    };
+  }
+
+  // filter room cụ thể
   if (roomId) {
     filter.roomId = new Types.ObjectId(roomId);
   }
@@ -573,15 +972,10 @@ export const getInvoices = async (options: {
     filter.status = status;
   }
 
-  // Calculate skip
   const skip = (page - 1) * limit;
 
-  // Query with pagination
   const [invoices, total] = await Promise.all([
     Invoice.find(filter)
-      .select(
-        "tenantId roomId month year electricityPrevious electricityCurrent electricityUsage electricityUnitPrice electricityCost waterPrevious waterCurrent waterUsage waterUnitPrice waterCost rentAmount parkingFee livingFee otherFee totalAmount dueDate notes status createdAt updatedAt",
-      )
       .populate("roomId", "number")
       .populate({
         path: "roomId",
@@ -594,56 +988,17 @@ export const getInvoices = async (options: {
       .skip(skip)
       .limit(limit)
       .lean(),
+
     Invoice.countDocuments(filter),
   ]);
-
-  // Populate tenant info for all invoices
-  const roomIds = [...new Set(invoices.map((inv) => inv.roomId))];
-  const rooms = await Room.find({ _id: { $in: roomIds } })
-    .select("members")
-    .lean();
-
-  const roomMembersMap = new Map();
-  rooms.forEach((room) => {
-    roomMembersMap.set(room._id.toString(), room.members);
-  });
-
-  // Add tenant info to each invoice
-  invoices.forEach((invoice) => {
-    if (invoice.roomId && invoice.tenantId) {
-      const members = roomMembersMap.get(invoice.roomId.toString());
-      if (members) {
-        const tenant = members.find(
-          (member: {
-            _id: string;
-            name: string;
-            phone: string;
-            isRepresentative: boolean;
-          }) => member._id.toString() === invoice.tenantId.toString(),
-        );
-        if (tenant) {
-          (invoice as any).tenantInfo = {
-            _id: tenant._id,
-            name: tenant.name,
-            phone: tenant.phone,
-            isRepresentative: tenant.isRepresentative,
-          };
-        }
-      }
-    }
-  });
-
-  const totalPages = Math.ceil(total / limit);
 
   return {
     invoices,
     pagination: {
       currentPage: page,
-      totalPages,
+      totalPages: Math.ceil(total / limit),
       totalItems: total,
       itemsPerPage: limit,
-      hasNextPage: page < totalPages,
-      hasPrevPage: page > 1,
     },
   };
 };

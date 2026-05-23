@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsEmail,
   IsEnum,
   IsNotEmpty,
@@ -32,7 +33,7 @@ export class CreateUserDto {
   phone!: string;
 
   @IsOptional()
-  @Type(() => Number) // Quan trọng: Convert string '1' -> number 1
+  @Type(() => Number)
   @IsEnum(ROLE)
   role?: ROLE;
 
@@ -40,6 +41,10 @@ export class CreateUserDto {
   @IsString()
   @Matches(/^[A-Z0-9]{1,10}$/, { message: "Biển số xe không hợp lệ" })
   licensePlate?: string;
+
+  @IsOptional()
+  @IsArray()
+  assignBuilding?: string[];
 }
 
 export class UpdateUserDto {
@@ -66,4 +71,8 @@ export class UpdateUserDto {
   @IsString()
   @Matches(/^[A-Z0-9]{1,10}$/, { message: "Biển số xe không hợp lệ" })
   licensePlate?: string;
+
+  @IsOptional()
+  @IsArray()
+  assignBuilding?: string[];
 }

@@ -13,39 +13,6 @@ import { PaginationUtil } from "../utils/pagination.util";
 import userModel from "../models/user.model";
 import { getUserById } from "../services/user.service";
 
-// export const getAllRoomsController = async (req: Request, res: Response) => {
-//   try {
-//     const { number, buildingId, floor, status } = req.query;
-//     const searchParams: any = {};
-//     if (number) searchParams.number = number as string;
-
-//     if (buildingId) {
-//       if (typeof buildingId === "object") {
-//         console.error("buildingId is object:", buildingId);
-//         return res.status(400).json({
-//           message: "buildingId must be a string, not an object",
-//         });
-//       }
-//       searchParams.buildingId = buildingId as string;
-//     }
-
-//     if (floor) searchParams.floor = parseInt(floor as string);
-//     if (status) searchParams.status = status as ROOMSTATUS;
-
-//     const pagination = PaginationUtil.parsePaginationParams(req.query);
-//     const result = await getAllRooms(searchParams, pagination);
-
-//     return res.status(200).json({
-//       rooms: result.data,
-//       pagination: result.pagination,
-//     });
-//   } catch (error: any) {
-//     return res.status(400).json({
-//       message: error.message,
-//     });
-//   }
-// };
-
 export const getAllRoomsController = async (req: Request, res: Response) => {
   try {
     const { roomNumber, buildingName, buildingId, status } = req.query;

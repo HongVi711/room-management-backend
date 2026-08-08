@@ -615,13 +615,47 @@ export const getRoomsWithMeterReadings = async (
   }
 
   // manager chỉ xem building được assign
-  if (searchParams?.assignedBuildingIds?.length) {
+  // if (searchParams?.assignedBuildingIds?.length) {
+  //   matchStage.buildingId = {
+  //     $in: searchParams.assignedBuildingIds.map((id) => new Types.ObjectId(id)),
+  //   };
+
+  //   // manager truyền buildingId cụ thể
+  //   if (searchParams?.buildingId) {
+  //     const isAllowed = searchParams.assignedBuildingIds.includes(
+  //       searchParams.buildingId,
+  //     );
+
+  //     if (!isAllowed) {
+  //       throw new Error("FORBIDDEN_BUILDING");
+  //     }
+
+  //     matchStage.buildingId = new Types.ObjectId(searchParams.buildingId);
+  //   }
+  // }
+  if (searchParams?.assignedBuildingIds) {
+    // Manager không được assign building nào
+    if (searchParams.assignedBuildingIds.length === 0) {
+      return {
+        rooms: [],
+        pagination: {
+          page,
+          limit,
+          total: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: page > 1,
+        },
+      };
+    }
+
+    // Manager chỉ được xem các building được assign
     matchStage.buildingId = {
       $in: searchParams.assignedBuildingIds.map((id) => new Types.ObjectId(id)),
     };
 
-    // manager truyền buildingId cụ thể
-    if (searchParams?.buildingId) {
+    // Nếu manager truyền buildingId cụ thể
+    if (searchParams.buildingId) {
       const isAllowed = searchParams.assignedBuildingIds.includes(
         searchParams.buildingId,
       );
@@ -632,6 +666,9 @@ export const getRoomsWithMeterReadings = async (
 
       matchStage.buildingId = new Types.ObjectId(searchParams.buildingId);
     }
+  } else if (searchParams?.buildingId) {
+    // Admin filter building cụ thể
+    matchStage.buildingId = new Types.ObjectId(searchParams.buildingId);
   }
 
   // search room number

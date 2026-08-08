@@ -24,7 +24,7 @@ const uploadFields = uploadCloud.fields([
 router.post(
   "/create",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin]),
   uploadFields,
   validateDto(CreateUserDto),
   createUser,
@@ -33,28 +33,28 @@ router.post(
 router.get(
   "/non-tenants",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin]),
   getNonTenantUsersController,
 );
 
 router.get(
   "/",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin]),
   getAllUsersController,
 );
 
 router.get(
   "/:id",
   authMiddleware,
-  requireRole([ROLE.OWNER, ROLE.TENANT]),
+  requireRole([ROLE.admin, ROLE.manager]),
   getUser,
 );
 
 router.put(
   "/:id",
   authMiddleware,
-  requireRole([ROLE.OWNER, ROLE.TENANT]),
+  requireRole([ROLE.admin]),
   uploadFields,
   validateDto(UpdateUserDto),
   updateUserController,
@@ -63,7 +63,7 @@ router.put(
 router.delete(
   "/:id",
   authMiddleware,
-  requireRole([ROLE.OWNER]),
+  requireRole([ROLE.admin]),
   deleteUserController,
 );
 

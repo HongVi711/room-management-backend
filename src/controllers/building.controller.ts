@@ -6,6 +6,7 @@ import {
   getAllBuildings,
   updateBuilding,
   deleteBuilding,
+  SearchBuildings,
 } from "../services/building.service";
 import { ROLE } from "../utils/app.constants";
 import { IBuilding } from "../models/building.model";
@@ -52,7 +53,7 @@ export const getBuildingController = async (req: Request, res: Response) => {
     }
 
     // Check quyền truy cập
-    if (currentUser.role === ROLE.TENANT) {
+    if (currentUser.role === ROLE.noRole) {
       return res.status(403).json({
         message: "Tenants cannot view building details",
       });
@@ -70,7 +71,10 @@ export const getBuildingController = async (req: Request, res: Response) => {
   }
 };
 
-export const getAllBuildingsController = async (req: Request, res: Response) => {
+export const getAllBuildingsController = async (
+  req: Request,
+  res: Response,
+) => {
   try {
     const { name, address, district, city, page, limit } = req.query;
 
@@ -115,6 +119,25 @@ export const getAllBuildingsController = async (req: Request, res: Response) => 
     return res.status(200).json({
       message: "All buildings retrieved successfully",
       data: result.buildings,
+      pagination: result.pagination,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+export const getSearchAllBuildingsByRoleController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const result = await SearchBuildings(req.body);
+
+    return res.status(200).json({
+      message: "All buildings retrieved successfully",
+      data: result.data,
       pagination: result.pagination,
     });
   } catch (error: any) {

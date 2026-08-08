@@ -22,6 +22,7 @@ export interface CreateUserInput {
   phone?: string;
   role?: ROLE;
   licensePlate?: string;
-  cccdFront: Express.Multer.File;
-  cccdBack: Express.Multer.File;
+  cccdFront?: Express.Multer.File;
+  cccdBack?: Express.Multer.File;
+  assignBuilding?: string[];
 }

@@ -64,7 +64,7 @@ export const getAllTenants = async (
   const tenants = await Tenant.find(query)
     .populate({
       path: "userId",
-      select: "name email phone cccd cccdImages",
+      select: "name email phone cccd",
     })
     .populate({
       path: "roomId",
@@ -95,7 +95,7 @@ export const getTenantById = async (tenantId: string): Promise<any | null> => {
   const tenant = await Tenant.findById(tenantId)
     .populate({
       path: "userId",
-      select: "name email phone cccd cccdImages",
+      select: "name email phone cccd",
     })
     .populate({
       path: "roomId",
@@ -156,7 +156,7 @@ export const updateTenant = async (
   )
     .populate({
       path: "userId",
-      select: "name email phone cccd cccdImages",
+      select: "name email phone cccd",
     })
     .populate({
       path: "roomId",

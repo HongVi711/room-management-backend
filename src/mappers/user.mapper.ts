@@ -10,12 +10,6 @@ export const toUserResponse = (user: IUser): UserResponseDto => ({
   ...(user.licensePlate && { licensePlate: user.licensePlate }),
   ...(user.createdAt && { createdAt: user.createdAt.toISOString() }),
   ...(user.updatedAt && { updatedAt: user.updatedAt.toISOString() }),
-  ...(user.cccdImages && {
-    cccdImages: {
-      front: user.cccdImages.front?.url || "",
-      back: user.cccdImages.back?.url || "",
-    },
-  }),
 });
 
 export const toRoomResponse = (room: any) => ({

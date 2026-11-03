@@ -10,39 +10,6 @@ import {
   PaginationParams,
   PaginatedResponse,
 } from "../utils/pagination.util";
-import { v2 as cloudinary } from "cloudinary";
-
-const deleteImageFromCloudinary = async (publicId: string): Promise<void> => {
-  if (!publicId || publicId === "") return;
-  try {
-    await cloudinary.uploader.destroy(publicId);
-  } catch (error) {}
-};
-
-const uploadImageToCloudinary = async (
-  base64String: string,
-): Promise<{ url: string; publicId: string }> => {
-  if (!base64String || base64String === "") {
-    return { url: "", publicId: "" };
-  }
-
-  if (!base64String.startsWith("data:image/")) {
-    return { url: base64String, publicId: "" };
-  }
-
-  try {
-    const result = await cloudinary.uploader.upload(base64String, {
-      folder: "users_cccd",
-      allowed_formats: ["jpg", "png", "jpeg", "webp"],
-    });
-    return {
-      url: result.secure_url,
-      publicId: result.public_id,
-    };
-  } catch (error) {
-    throw new Error("Không thể upload ảnh lên Cloudinary");
-  }
-};
 
 export const updateRoom = async (
   roomId: string,
@@ -77,15 +44,6 @@ export const updateRoom = async (
       .filter((m) => m._id)
       .map((m) => m._id!.toString());
 
-    const removedMembers = updatedMembers.filter(
-      (m) => !incomingMemberIds.includes(m._id.toString()),
-    );
-
-    for (const removedMember of removedMembers) {
-      await deleteImageFromCloudinary(removedMember.cccdImages.front.publicId);
-      await deleteImageFromCloudinary(removedMember.cccdImages.back.publicId);
-    }
-
     updatedMembers = updatedMembers.filter((m) =>
       incomingMemberIds.includes(m._id.toString()),
     );
@@ -101,74 +59,19 @@ export const updateRoom = async (
           (m) => m._id.toString() === memberData._id?.toString(),
         );
         if (index !== -1) {
-          const existingMember = updatedMembers[index];
-          let frontImageData = {
-            url: existingMember.cccdImages.front.url,
-            publicId: existingMember.cccdImages.front.publicId,
-          };
-          let backImageData = {
-            url: existingMember.cccdImages.back.url,
-            publicId: existingMember.cccdImages.back.publicId,
-          };
-
-          if (memberData.cccdImages?.front?.url) {
-            const uploadedFront = await uploadImageToCloudinary(
-              memberData.cccdImages.front.url,
-            );
-            if (
-              uploadedFront.url !== existingMember.cccdImages.front.url &&
-              uploadedFront.publicId
-            ) {
-              await deleteImageFromCloudinary(
-                existingMember.cccdImages.front.publicId,
-              );
-            }
-            frontImageData = uploadedFront;
-          }
-
-          if (memberData.cccdImages?.back?.url) {
-            const uploadedBack = await uploadImageToCloudinary(
-              memberData.cccdImages.back.url,
-            );
-            if (
-              uploadedBack.url !== existingMember.cccdImages.back.url &&
-              uploadedBack.publicId
-            ) {
-              await deleteImageFromCloudinary(
-                existingMember.cccdImages.back.publicId,
-              );
-            }
-            backImageData = uploadedBack;
-          }
-
           updatedMembers[index] = {
-            ...existingMember,
+            ...updatedMembers[index],
             ...memberData,
-            cccdImages: {
-              front: frontImageData,
-              back: backImageData,
-            },
             _id: new Types.ObjectId(memberData._id),
             userId,
           };
         }
       } else {
-        const frontImageData = memberData.cccdImages?.front?.url
-          ? await uploadImageToCloudinary(memberData.cccdImages.front.url)
-          : { url: "", publicId: "" };
-        const backImageData = memberData.cccdImages?.back?.url
-          ? await uploadImageToCloudinary(memberData.cccdImages.back.url)
-          : { url: "", publicId: "" };
-
         updatedMembers.push({
           name: memberData.name || "",
           phone: memberData.phone || "",
           licensePlate: memberData.licensePlate || "",
           isRepresentative: !!memberData.isRepresentative,
-          cccdImages: {
-            front: frontImageData,
-            back: backImageData,
-          },
           _id: new Types.ObjectId(),
           userId,
         });

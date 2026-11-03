@@ -108,17 +108,5 @@ export class MemberUpdateDto {
   licensePlate?: string;
 
   @IsOptional()
-  cccdImages?: {
-    front: {
-      url?: string; // Base64 string hoặc URL từ Cloudinary (backend sẽ tự upload nếu là base64)
-      publicId?: string; // Không cần gửi, backend sẽ tự động xử lý
-    };
-    back: {
-      url?: string; // Base64 string hoặc URL từ Cloudinary (backend sẽ tự upload nếu là base64)
-      publicId?: string; // Không cần gửi, backend sẽ tự động xử lý
-    };
-  };
-
-  @IsOptional()
   isRepresentative?: boolean;
 }

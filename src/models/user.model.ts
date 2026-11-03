@@ -8,10 +8,6 @@ export interface IUser extends Document {
   role: ROLE;
   phone?: string;
   licensePlate: string;
-  cccdImages?: {
-    front: { url: string; publicId: string };
-    back: { url: string; publicId: string };
-  };
   assignBuilding: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
@@ -29,16 +25,6 @@ const userSchema = new Schema<IUser>(
     },
     phone: { type: String, default: "" },
     licensePlate: { type: String, default: "" },
-    cccdImages: {
-      front: {
-        url: { type: String, default: "" },
-        publicId: { type: String, default: "" },
-      },
-      back: {
-        url: { type: String, default: "" },
-        publicId: { type: String, default: "" },
-      },
-    },
     assignBuilding: [
       {
         type: Schema.Types.ObjectId,

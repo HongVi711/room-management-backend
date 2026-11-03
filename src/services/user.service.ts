@@ -6,7 +6,7 @@ import { CreateUserInput } from "../interfaces/auth.interface";
 import { PaginationUtil, PaginationParams } from "../utils/pagination.util";
 
 export const UserService = async (data: CreateUserInput) => {
-  const { email, password, phone, cccdFront, cccdBack } = data;
+  const { email, password, phone } = data;
 
   const existingEmail = await User.findOne({ email });
   if (existingEmail) {
@@ -27,19 +27,6 @@ export const UserService = async (data: CreateUserInput) => {
     password: hashedPassword,
     role: data.role ?? ROLE.noRole,
   };
-
-  if (cccdFront && cccdBack) {
-    userData.cccdImages = {
-      front: {
-        url: cccdFront.path,
-        publicId: cccdFront.filename,
-      },
-      back: {
-        url: cccdBack.path,
-        publicId: cccdBack.filename,
-      },
-    };
-  }
 
   const newUser = await User.create(userData);
 

@@ -12,18 +12,9 @@ import { PaginationUtil } from "../utils/pagination.util";
 
 export const createUser = async (req: Request, res: Response) => {
   try {
-    const files = req.files as {
-      [fieldname: string]: Express.Multer.File[];
-    };
-
-    const frontFile = files?.cccdFront?.[0];
-    const backFile = files?.cccdBack?.[0];
-
     const newUser = await UserService({
       ...req.body,
       password: req.body.phone as string,
-      cccdFront: frontFile,
-      cccdBack: backFile,
     });
 
     const { password, ...userResponse } = newUser.toObject();
@@ -159,28 +150,7 @@ export const updateUserController = async (req: Request, res: Response) => {
       });
     }
 
-    const files = req.files as {
-      [fieldname: string]: Express.Multer.File[];
-    };
-
-    const frontFile = files?.cccdFront?.[0];
-    const backFile = files?.cccdBack?.[0];
-
     const updateData: any = { ...req.body };
-
-    if (frontFile) {
-      updateData["cccdImages.front"] = {
-        url: frontFile.path,
-        publicId: frontFile.filename,
-      };
-    }
-
-    if (backFile) {
-      updateData["cccdImages.back"] = {
-        url: backFile.path,
-        publicId: backFile.filename,
-      };
-    }
 
     const updatedUser = await updateUser(id, updateData);
 

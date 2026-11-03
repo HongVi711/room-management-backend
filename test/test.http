@@ -1038,7 +1038,7 @@ Authorization: Bearer {{owner_token}}
 ###
 # EXPECT: 200 OK
 # Response sẽ có:
-# - userId: { name, email, phone, cccdImages }
+# - userId: { name, email, phone }
 # - roomId: { number, floor, buildingId: { name, address } }
 # - status, moveInDate, contractEndDate, emergencyContact
 ###
@@ -1557,7 +1557,7 @@ Content-Type: application/json
 ### 🆕 TEST CREATE USER API
 #######################################
 
-### Create user (SUCCESS - OWNER) - Without CCCD images
+### Create user (SUCCESS - OWNER)
 POST {{baseUrl}}/api/users/create
 Authorization: Bearer {{owner_token}}
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
@@ -1582,11 +1582,11 @@ Content-Disposition: form-data; name="role"
 
 ###
 # EXPECT: 201 Created
-# Response sẽ có user data mới (không có password, không có cccdImages)
+# Response sẽ có user data mới (không có password)
 # licensePlate sẽ là empty string theo model default
 ###
 
-### Create user (SUCCESS - OWNER) - With CCCD images
+### Create user (FAIL - gửi kèm file)
 POST {{baseUrl}}/api/users/create
 Authorization: Bearer {{owner_token}}
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
@@ -1608,20 +1608,35 @@ Content-Disposition: form-data; name="licensePlate"
 
 51A12345
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="cccdFront"; filename="front.jpg"
-Content-Type: image/jpeg
+Content-Disposition: form-data; name="cccdFront"; filename="front.txt"
+Content-Type: text/plain
 
-<./test-images/cccd-front.jpg>
-------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="cccdBack"; filename="back.jpg"
-Content-Type: image/jpeg
-
-<./test-images/cccd-back.jpg>
+gia
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 ###
-# EXPECT: 201 Created
-# Response sẽ có user data mới với licensePlate = "51A12345" và cccdImages
+# EXPECT: 400 "Hệ thống không còn nhận ảnh CCCD", không tạo user
+###
+
+### Update user (FAIL - gửi kèm file)
+@updateUserId = <id user cần kiểm tra>
+PUT {{baseUrl}}/api/users/{{updateUserId}}
+Authorization: Bearer {{owner_token}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="name"
+
+Tên Không Được Lưu
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="cccdBack"; filename="back.txt"
+Content-Type: text/plain
+
+gia
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+# EXPECT: 400 "Hệ thống không còn nhận ảnh CCCD", dữ liệu user không đổi
 ###
 
 

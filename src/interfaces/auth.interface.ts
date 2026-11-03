@@ -7,10 +7,6 @@ export interface UserResponseDto {
   role: ROLE;
   phone?: string;
   licensePlate?: string;
-  cccdImages?: {
-    front: string;
-    back: string;
-  };
   createdAt: string;
   updatedAt: string;
 }
@@ -22,7 +18,5 @@ export interface CreateUserInput {
   phone?: string;
   role?: ROLE;
   licensePlate?: string;
-  cccdFront?: Express.Multer.File;
-  cccdBack?: Express.Multer.File;
   assignBuilding?: string[];
 }

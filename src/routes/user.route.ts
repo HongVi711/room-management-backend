@@ -7,7 +7,7 @@ import {
   updateUserController,
   getNonTenantUsersController,
 } from "../controllers/user.controller";
-import { uploadCloud } from "../config/cloudinary.config";
+import { formFieldsOnly } from "../middlewares/form-fields.middleware";
 import { validateDto } from "../middlewares/validate.middleware";
 import { CreateUserDto, UpdateUserDto } from "../dtos/user.dto";
 import { authMiddleware } from "../middlewares/auth.middleware";
@@ -16,16 +16,11 @@ import { ROLE } from "../utils/app.constants";
 
 const router = Router();
 
-const uploadFields = uploadCloud.fields([
-  { name: "cccdFront", maxCount: 1 },
-  { name: "cccdBack", maxCount: 1 },
-]);
-
 router.post(
   "/create",
   authMiddleware,
   requireRole([ROLE.admin]),
-  uploadFields,
+  formFieldsOnly,
   validateDto(CreateUserDto),
   createUser,
 );
@@ -55,7 +50,7 @@ router.put(
   "/:id",
   authMiddleware,
   requireRole([ROLE.admin]),
-  uploadFields,
+  formFieldsOnly,
   validateDto(UpdateUserDto),
   updateUserController,
 );

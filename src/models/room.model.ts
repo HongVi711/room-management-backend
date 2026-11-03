@@ -7,16 +7,6 @@ const memberSchema = new Schema({
   name: { type: String, required: true },
   phone: { type: String, default: "" },
   licensePlate: { type: String, default: "" },
-  cccdImages: {
-    front: {
-      url: { type: String, default: "" },
-      publicId: { type: String, default: "" },
-    },
-    back: {
-      url: { type: String, default: "" },
-      publicId: { type: String, default: "" },
-    },
-  },
 
   isRepresentative: { type: Boolean, default: false }, // Người chịu trách nhiệm chính
 });
@@ -38,16 +28,6 @@ export interface IRoom extends Document {
     name: string;
     phone: string;
     licensePlate: string;
-    cccdImages: {
-      front: {
-        url: string;
-        publicId: string;
-      };
-      back: {
-        url: string;
-        publicId: string;
-      };
-    };
     isRepresentative: boolean;
   }[];
   description?: string;
